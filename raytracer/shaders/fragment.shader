@@ -4,19 +4,7 @@ struct ray {
 	bool noRay;
 	vec3 direction;
 	vec3 origin;
-
-    /*ray(vec3 o, vec3 d) {
-        noRay = false;
-        origin = o;
-        direction = normalize(d);
-    }
-    ray(vec3 o, vec3 d, bool nr) {
-        noRay = nr;
-        origin = o;
-        direction = normalize(d);
-    }*/
 };
-
 ray createRay(vec3 o, vec3 d) {
     ray r;
     r.origin = o;
@@ -24,32 +12,21 @@ ray createRay(vec3 o, vec3 d) {
     return r;
 }
 
-
-
 struct material {
 	vec3 color;
+    vec3 emittance;
 };
-
 struct sphere {
 	float radius;
 	vec3 center;
 	material material;
 };
-
 sphere createSphere(float r, vec3 c) {
     sphere s;
     s.radius = r;
     s.center = c;
     return s;
 }
-
-struct hit {
-    bool didHit;
-    float distance;
-    vec3 hitPoint;
-    vec3 normal;
-    material objectMaterial;
-};
 
 struct camera {
     float fov;
@@ -63,7 +40,6 @@ struct camera {
     vec3 horizontal;
     vec3 vertical;
 };
-
 camera createCamera(float f, float aR) {
     camera c;
     c.fov = f;
@@ -82,12 +58,18 @@ camera createCamera(float f, float aR) {
 
     return c;
 }
-
 ray createCameraRay(float u, float v, camera c) {
     ray r = createRay(c.origin, c.lowerLeft + u * c.horizontal + v * c.vertical - c.origin);
     return r;
 }
 
+struct hit {
+    bool didHit;
+    float distance;
+    vec3 hitPoint;
+    vec3 normal;
+    material objectMaterial;
+};
 hit intersect(ray r, sphere s) {
     hit h;
     float t = 0;
@@ -111,24 +93,26 @@ hit intersect(ray r, sphere s) {
     else {
         h.didHit = false;
         return h;
-    }
+    } 
     h.distance = t;
     h.hitPoint = r.origin + r.direction * t;
-    h.normal = h.hitPoint - s.center / s.radius;
+    h.normal = (h.hitPoint - s.center) / s.radius;
+    h.objectMaterial = s.material;
     return h;
 }
 
-int sphereNum;
-sphere[] spheres = sphere[](createSphere(0.5, vec3(0, 3, -5)));
+const int sphereNum = 5;
+sphere spheres[sphereNum];
 
 hit collision(ray r) {
-    float minDist = intersect(r, spheres[0]).distance;
+    float minDist = 1.0/0.0;
     hit result;
     for (int i = 0; i < sphereNum; i++) {
         hit h = intersect(r, spheres[i]);
         if (h.didHit && h.distance < minDist) {
+            minDist = h.distance;
             result = h;
-            result.objectMaterial = spheres[i].material;
+            //result.objectMaterial = spheres[i].material;
         }
     }
     return result;
@@ -141,32 +125,50 @@ uint nextRandom(inout uint state)
     result = (result >> uint(22)) ^ result;
     return result;
 }
-
 float random(inout uint state)
 {
     return nextRandom(state) / 4294967295.0;
 }
-
 float randNormalDist(inout uint state) {
     float theta = radians(360.0) * random(state);
     float rho = sqrt(-2 *log(random(state)));
     return rho * cos(theta);
 }
-
 ray randHemisphereRay(vec3 origin, vec3 normal, inout uint state) {
     ray r = createRay(origin, vec3(random(state), random(state), random(state)));
     r.direction *= dot(r.direction, normal);
     return r;
 }
 
+vec3 trace(ray r, inout uint state, int depth) {
+    vec3 totalIllumination = vec3(0, 0, 0);
+    vec3 rayColor = vec3(1, 1, 1);
+    ray tracedRay = r;
+    hit tracedHit;
+    for (int i = 0; i < depth; i++) {
+        tracedHit = collision(tracedRay);
+        if (!tracedHit.didHit) {
+            break;
+        }
+        tracedRay = randHemisphereRay(tracedHit.hitPoint, tracedHit.normal, state);
+        totalIllumination += tracedHit.objectMaterial.emittance*rayColor;
+        rayColor *= tracedHit.objectMaterial.color *dot(tracedRay.direction, tracedHit.normal) *2;
+        
+        
+    }
+    return totalIllumination;
+}
+
 out vec3 color;
 
-uniform vec3 uColor[];
+//uniform vec3 uColor[];
+
+uniform float sphereVertical;
 
 
 void main() {
-	const int height = 1080;
-	const int width = 1080;
+	const int height = 2160;
+	const int width = 2160;
 
 	vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
@@ -175,14 +177,57 @@ void main() {
     camera c = createCamera(90, 1);
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
 
-    sphere s = createSphere(0.5, vec3(0, 3, -5));
-    hit sIntersect = intersect(cameraRay,s);
-    if (sIntersect.didHit) {
+    material objMaterial;
+    objMaterial.color = vec3(0.5, 0.5, 0.5);
+    objMaterial.emittance = vec3(0, 0, 0);
+    material lightMaterial;
+    lightMaterial.color = vec3(1, 1, 1);
+    lightMaterial.emittance = vec3(1, 1, 1);
+
+    //sphere s1 = createSphere(13, vec3(10, 8, -13.5));
+    sphere s1 = createSphere(14, vec3(-3, 18, sphereVertical*-1));
+    sphere s2 = createSphere(1, vec3(-3, 0, -6));
+    sphere s3 = createSphere(1, vec3(0, 0, -5));
+    sphere s4 = createSphere(1, vec3(3, 0, -4));
+    sphere s5 = createSphere(100, vec3(0, -101, 3));
+    s1.material = lightMaterial;
+    s2.material = objMaterial;
+    s3.material = objMaterial;
+    s4.material = objMaterial;
+    s5.material = objMaterial;
+    s2.material.color = vec3(0, 0, 1);
+    s3.material.color = vec3(0, 1, 0);
+    s4.material.color = vec3(1, 0, 0);
+    s5.material.color = vec3(1, 1, 1);
+    spheres[0] = s1;
+    spheres[1] = s2;
+    spheres[2] = s3;
+    spheres[3] = s4;
+    spheres[4] = s5;
+
+
+    //hit sIntersect = collision(cameraRay);
+
+    int sampleNum = 100;
+
+    vec3 totalLight = vec3(0,0,0);
+    for (int i = 0; i < sampleNum; i++) {
+        totalLight += trace(cameraRay, rngState, 30);
+    }
+    totalLight /= sampleNum;
+    color = totalLight;
+
+    //one object intersect
+    //hit sIntersect = intersect(cameraRay,s);
+    /*if (sIntersect.didHit) {
         color = vec3( 1,1,1 );
     }
     else {
         color = vec3(0, 0, 0);
-    }
+    }*/
+    
+
+    //random color
     //color = vec3(random(rngState), random(rngState), random(rngState));
   
 }

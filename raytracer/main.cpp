@@ -24,13 +24,13 @@ static unsigned int CompileShader(unsigned int type, const std::string& source) 
     const char* src = source.c_str();
     glShaderSource(id, 1, &src, nullptr);
     glCompileShader(id);
-    
+
     int result;
     glGetShaderiv(id, GL_COMPILE_STATUS, &result);
     if (result == GL_FALSE) {
         int length;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char*)alloca(length*sizeof(char));
+        char* message = (char*)alloca(length * sizeof(char));
         glGetShaderInfoLog(id, length, &length, message);
         std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader!" << std::endl;
         std::cout << message << std::endl;
@@ -46,7 +46,7 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
     unsigned int program = glCreateProgram();
     unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
     unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-    
+
     glAttachShader(program, vs);
     glAttachShader(program, fs);
     glLinkProgram(program);
@@ -63,13 +63,18 @@ static void CreateUniform3Floats(unsigned int shader, const std::string& name, u
     //glUniform3f(location, 0.2f, 0.3f, 0.8f);
     glUniform3fv(location, count, value);
 }
+static void CreateUniform1Float(unsigned int shader, const std::string& name, float value) {
+    int location = glGetUniformLocation(shader, name.c_str());
+    //glUniform3f(location, 0.2f, 0.3f, 0.8f);
+    glUniform1f(location, value);
+}
 
-int main(void){
+int main(void) {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
     GLFWwindow* window;
-    const int height = 1080;
-    const int width = 1080;
+    const int height = 2160;
+    const int width = 2160;
 
     if (!glfwInit())
         return -1;
@@ -113,16 +118,18 @@ int main(void){
 
     float colorData[] = { 1,0,0,0,0,1 };
 
-    CreateUniform3Floats(shader, "uColor", 2, colorData);
+    //CreateUniform3Floats(shader, "uColor", 2, colorData);
+    CreateUniform1Float(shader, "sphereVertical", 0.0);
 
     float r = 0.01f;
-    float increment = 0.01f;
-    while (!glfwWindowShouldClose(window)){
+    float increment = 1.0f;
+    while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
-        //glUniform3f(location, r, r*r*r, r*r);
-        if (r < 0.0f||r>1.0f) {
+        CreateUniform1Float(shader, "sphereVertical", r);
+        if (r < -10.0f || r>20.0f) {
             increment *= -1;
         }
+        
         glDrawArrays(GL_QUADS, 0, 4);
         r += increment;
 
