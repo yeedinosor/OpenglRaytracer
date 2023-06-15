@@ -101,7 +101,7 @@ hit intersect(ray r, sphere s) {
     return h;
 }
 
-const int sphereNum = 5;
+const int sphereNum = 6;
 sphere spheres[sphereNum];
 
 hit collision(ray r) {
@@ -135,9 +135,15 @@ float randNormalDist(inout uint state) {
     return rho * cos(theta);
 }
 ray randHemisphereRay(vec3 origin, vec3 normal, inout uint state) {
-    ray r = createRay(origin, vec3(random(state), random(state), random(state)));
-    r.direction *= dot(r.direction, normal);
+    ray r = createRay(origin, vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
+    //r.direction *= dot(r.direction, normal);
+    if (dot(r.direction, normal) < 0) {
+        r.direction *= vec3(-1, -1, -1);
+    }
     return r;
+}
+vec3 randDirection(inout uint state) {
+    return vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state));
 }
 
 vec3 trace(ray r, inout uint state, int depth) {
@@ -150,10 +156,10 @@ vec3 trace(ray r, inout uint state, int depth) {
         if (!tracedHit.didHit) {
             break;
         }
-        tracedRay = randHemisphereRay(tracedHit.hitPoint, tracedHit.normal, state);
+        tracedRay = createRay(tracedHit.hitPoint, randDirection(state) + tracedHit.normal);
         totalIllumination += tracedHit.objectMaterial.emittance*rayColor;
-        rayColor *= tracedHit.objectMaterial.color *dot(tracedRay.direction, tracedHit.normal) *2;
-        
+        //rayColor *= tracedHit.objectMaterial.color *dot(tracedRay.direction, tracedHit.normal) *2;
+        rayColor *= tracedHit.objectMaterial.color;
         
     }
     return totalIllumination;
@@ -178,41 +184,45 @@ void main() {
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
 
     material objMaterial;
-    objMaterial.color = vec3(0.5, 0.5, 0.5);
+    objMaterial.color = vec3(1, 1, 1);
     objMaterial.emittance = vec3(0, 0, 0);
     material lightMaterial;
     lightMaterial.color = vec3(1, 1, 1);
     lightMaterial.emittance = vec3(1, 1, 1);
 
-    //sphere s1 = createSphere(13, vec3(10, 8, -13.5));
-    sphere s1 = createSphere(14, vec3(-3, 18, sphereVertical*-1));
-    sphere s2 = createSphere(1, vec3(-3, 0, -6));
-    sphere s3 = createSphere(1, vec3(0, 0, -5));
-    sphere s4 = createSphere(1, vec3(3, 0, -4));
+    //sphere s1 = createSphere(3, vec3(10, 8, -13.5));
+    sphere s1 = createSphere(3, vec3(-3, 18, sphereVertical*-1));
+    sphere s2 = createSphere(1, vec3(-4, 0, -6));
+    sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
+    sphere s4 = createSphere(1, vec3(2, 0, -5));
     sphere s5 = createSphere(100, vec3(0, -101, 3));
+    sphere s6 = createSphere(1, vec3(5, 0, -4.5));
     s1.material = lightMaterial;
     s2.material = objMaterial;
     s3.material = objMaterial;
     s4.material = objMaterial;
     s5.material = objMaterial;
+    s6.material = objMaterial;
     s2.material.color = vec3(0, 0, 1);
     s3.material.color = vec3(0, 1, 0);
     s4.material.color = vec3(1, 0, 0);
     s5.material.color = vec3(1, 1, 1);
+    s6.material.color = vec3(1, 1, 1);
     spheres[0] = s1;
     spheres[1] = s2;
     spheres[2] = s3;
     spheres[3] = s4;
     spheres[4] = s5;
+    spheres[5] = s6;
 
 
     //hit sIntersect = collision(cameraRay);
 
-    int sampleNum = 100;
+    int sampleNum = 40;
 
     vec3 totalLight = vec3(0,0,0);
     for (int i = 0; i < sampleNum; i++) {
-        totalLight += trace(cameraRay, rngState, 30);
+        totalLight += trace(cameraRay, rngState, 20);
     }
     totalLight /= sampleNum;
     color = totalLight;
