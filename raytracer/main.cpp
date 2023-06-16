@@ -73,8 +73,8 @@ int main(void) {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
     GLFWwindow* window;
-    const int height = 2160;
-    const int width = 2160;
+    const int height = 1080;
+    const int width = 1080;
 
     if (!glfwInit())
         return -1;
@@ -102,6 +102,23 @@ int main(void) {
         -1, 1,
     };
 
+    //unsigned int fbo;
+    //glGenFramebuffers(1, &fbo);
+    //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    //unsigned int screenTexture;
+    //glGenTextures(1, &screenTexture);
+    //glBindTexture(GL_TEXTURE_2D, screenTexture);
+    //// Set texture parameters and allocate storage if needed
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTexture, 0);
+
+    //if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    //    std::cout << "FRAMEBUFFER ERROR" << std::endl;
+    //}
+
+    //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
     unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -121,11 +138,25 @@ int main(void) {
     //CreateUniform3Floats(shader, "uColor", 2, colorData);
     CreateUniform1Float(shader, "sphereVertical", 0.0);
 
+    glUniform3f(glGetUniformLocation(shader, "camPos"),0.0,0.0,0.0);
+
     float r = 0.01f;
     float increment = 1.0f;
+
+    float previousTime = glfwGetTime();
+    int fps = 0;
+
     while (!glfwWindowShouldClose(window)) {
+        fps++;
+        float currentTime = glfwGetTime();
+        if (currentTime-previousTime >= 1.0) {
+            std::cout << fps << " fps, "<<1000/fps<<" ms"<< std::endl;
+            fps = 0;
+            previousTime = currentTime;
+        }
         glClear(GL_COLOR_BUFFER_BIT);
         CreateUniform1Float(shader, "sphereVertical", r);
+        glUniform3f(glGetUniformLocation(shader, "camPos"), r/4, 0.0, 0.0);
         if (r < -10.0f || r>20.0f) {
             increment *= -1;
         }

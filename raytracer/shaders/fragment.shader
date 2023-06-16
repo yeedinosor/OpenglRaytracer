@@ -15,6 +15,7 @@ ray createRay(vec3 o, vec3 d) {
 struct material {
 	vec3 color;
     vec3 emittance;
+    float smoothness;
 };
 struct sphere {
 	float radius;
@@ -40,7 +41,7 @@ struct camera {
     vec3 horizontal;
     vec3 vertical;
 };
-camera createCamera(float f, float aR) {
+camera createCamera(float f, float aR, vec3 pos) {
     camera c;
     c.fov = f;
     c.aspectRatio = aR;
@@ -51,7 +52,7 @@ camera createCamera(float f, float aR) {
     c.viewportWidth = aR*c.viewportHeight;
     c.focalLength = 1;
 
-    c.origin = vec3(0, 0, 0);
+    c.origin = pos;
     c.horizontal = vec3(c.viewportWidth, 0, 0);
     c.vertical = vec3(0, c.viewportHeight, 0);
     c.lowerLeft = c.origin - c.horizontal / 2 - c.vertical / 2 - vec3(0, 0, c.focalLength);
@@ -118,17 +119,14 @@ hit collision(ray r) {
     return result;
 }
 
-uint nextRandom(inout uint state)
+float random(inout uint state)
 {
     state = state * uint(747796405) + uint(2891336453);
     uint result = ((state >> ((state >> uint(28)) + uint(4))) ^ state) * uint(277803737);
     result = (result >> uint(22)) ^ result;
-    return result;
+    return result / 4294967295.0;
 }
-float random(inout uint state)
-{
-    return nextRandom(state) / 4294967295.0;
-}
+
 float randNormalDist(inout uint state) {
     float theta = radians(360.0) * random(state);
     float rho = sqrt(-2 *log(random(state)));
@@ -143,7 +141,7 @@ ray randHemisphereRay(vec3 origin, vec3 normal, inout uint state) {
     return r;
 }
 vec3 randDirection(inout uint state) {
-    return vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state));
+    return (vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
 }
 
 vec3 trace(ray r, inout uint state, int depth) {
@@ -155,11 +153,19 @@ vec3 trace(ray r, inout uint state, int depth) {
         tracedHit = collision(tracedRay);
         if (!tracedHit.didHit) {
             break;
-        }
-        tracedRay = createRay(tracedHit.hitPoint, randDirection(state) + tracedHit.normal);
-        totalIllumination += tracedHit.objectMaterial.emittance*rayColor;
-        //rayColor *= tracedHit.objectMaterial.color *dot(tracedRay.direction, tracedHit.normal) *2;
+        }            
+        vec3 specularDir = tracedRay.direction - 2 * tracedHit.normal * (dot(tracedHit.normal, tracedRay.direction));
+        vec3 diffuseDir = randDirection(state)+ tracedHit.normal;
+        tracedRay = createRay(tracedHit.hitPoint, mix(diffuseDir, specularDir, tracedHit.objectMaterial.smoothness));
+
+        totalIllumination += tracedHit.objectMaterial.emittance * rayColor;
+        
         rayColor *= tracedHit.objectMaterial.color;
+
+
+        //tracedRay = randHemisphereRay(tracedHit.hitPoint, tracedHit.normal, state);
+        //totalIllumination += tracedHit.objectMaterial.emittance*rayColor * dot(tracedRay.direction, tracedHit.normal) * 2;
+        //rayColor *= tracedHit.objectMaterial.color;
         
     }
     return totalIllumination;
@@ -171,24 +177,18 @@ out vec3 color;
 
 uniform float sphereVertical;
 
+uniform vec3 camPos;
 
 void main() {
-	const int height = 2160;
-	const int width = 2160;
+	const int height = 1080;
+	const int width = 1080;
 
 	vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
     uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x);
 
-    camera c = createCamera(90, 1);
+    camera c = createCamera(90, 1, camPos);
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
-
-    material objMaterial;
-    objMaterial.color = vec3(1, 1, 1);
-    objMaterial.emittance = vec3(0, 0, 0);
-    material lightMaterial;
-    lightMaterial.color = vec3(1, 1, 1);
-    lightMaterial.emittance = vec3(1, 1, 1);
 
     //sphere s1 = createSphere(3, vec3(10, 8, -13.5));
     sphere s1 = createSphere(3, vec3(-3, 18, sphereVertical*-1));
@@ -197,17 +197,24 @@ void main() {
     sphere s4 = createSphere(1, vec3(2, 0, -5));
     sphere s5 = createSphere(100, vec3(0, -101, 3));
     sphere s6 = createSphere(1, vec3(5, 0, -4.5));
-    s1.material = lightMaterial;
-    s2.material = objMaterial;
-    s3.material = objMaterial;
-    s4.material = objMaterial;
-    s5.material = objMaterial;
-    s6.material = objMaterial;
+    s1.material.color = vec3(1, 1, 1);
+    s1.material.emittance = vec3(2, 2, 2);
+    s2.material.emittance = vec3(0, 0, 0);
+    s3.material.emittance = vec3(0, 0, 0);
+    s4.material.emittance = vec3(0, 0, 0);
+    s5.material.emittance = vec3(0, 0, 0);
+    s6.material.emittance = vec3(0, 0, 0);
     s2.material.color = vec3(0, 0, 1);
-    s3.material.color = vec3(0, 1, 0);
+    s3.material.color = vec3(1, 1, 1);
     s4.material.color = vec3(1, 0, 0);
     s5.material.color = vec3(1, 1, 1);
     s6.material.color = vec3(1, 1, 1);
+    s1.material.smoothness = 0.0;
+    s2.material.smoothness = 0.0;
+    s3.material.smoothness = 0.9;
+    s4.material.smoothness = 1.0;
+    s5.material.smoothness = 0.5;
+    s6.material.smoothness = 0.0;
     spheres[0] = s1;
     spheres[1] = s2;
     spheres[2] = s3;
@@ -218,11 +225,11 @@ void main() {
 
     //hit sIntersect = collision(cameraRay);
 
-    int sampleNum = 40;
+    int sampleNum = 100;
 
     vec3 totalLight = vec3(0,0,0);
     for (int i = 0; i < sampleNum; i++) {
-        totalLight += trace(cameraRay, rngState, 20);
+        totalLight += trace(cameraRay, rngState, 30);
     }
     totalLight /= sampleNum;
     color = totalLight;
