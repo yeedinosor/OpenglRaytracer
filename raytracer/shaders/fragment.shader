@@ -198,7 +198,7 @@ void main() {
     sphere s5 = createSphere(100, vec3(0, -101, 3));
     sphere s6 = createSphere(1, vec3(5, 0, -4.5));
     s1.material.color = vec3(1, 1, 1);
-    s1.material.emittance = vec3(2, 2, 2);
+    s1.material.emittance = vec3(1, 1, 1);
     s2.material.emittance = vec3(0, 0, 0);
     s3.material.emittance = vec3(0, 0, 0);
     s4.material.emittance = vec3(0, 0, 0);
@@ -213,7 +213,7 @@ void main() {
     s2.material.smoothness = 0.0;
     s3.material.smoothness = 0.9;
     s4.material.smoothness = 1.0;
-    s5.material.smoothness = 0.5;
+    s5.material.smoothness = 0.0;
     s6.material.smoothness = 0.0;
     spheres[0] = s1;
     spheres[1] = s2;

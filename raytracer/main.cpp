@@ -156,7 +156,7 @@ int main(void) {
         }
         glClear(GL_COLOR_BUFFER_BIT);
         CreateUniform1Float(shader, "sphereVertical", r);
-        glUniform3f(glGetUniformLocation(shader, "camPos"), r/4, 0.0, 0.0);
+        glUniform3f(glGetUniformLocation(shader, "camPos"), r/6, 0.0, 0.0);
         if (r < -10.0f || r>20.0f) {
             increment *= -1;
         }
