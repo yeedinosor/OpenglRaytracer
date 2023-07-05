@@ -1,9 +1,9 @@
 #version 330 core
 
 struct ray {
-	bool noRay;
-	vec3 direction;
-	vec3 origin;
+    bool noRay;
+    vec3 direction;
+    vec3 origin;
 };
 ray createRay(vec3 o, vec3 d) {
     ray r;
@@ -13,14 +13,14 @@ ray createRay(vec3 o, vec3 d) {
 }
 
 struct material {
-	vec3 color;
+    vec3 color;
     vec3 emittance;
     float smoothness;
 };
 struct sphere {
-	float radius;
-	vec3 center;
-	material material;
+    float radius;
+    vec3 center;
+    material material;
 };
 sphere createSphere(float r, vec3 c) {
     sphere s;
@@ -46,10 +46,9 @@ camera createCamera(float f, float aR, vec3 pos) {
     c.fov = f;
     c.aspectRatio = aR;
 
-    c.h = tan(radians(f/2));
-    //c.h = 1;
-    c.viewportHeight = 2*c.h;
-    c.viewportWidth = aR*c.viewportHeight;
+    c.h = tan(radians(f / 2));
+    c.viewportHeight = 2 * c.h;
+    c.viewportWidth = aR * c.viewportHeight;
     c.focalLength = 1;
 
     c.origin = pos;
@@ -76,7 +75,11 @@ hit intersect(ray r, sphere s) {
     float t = 0;
     vec3 v = r.origin - s.center;
     float vdotd = dot(v, r.direction);
-    float discriminant = vdotd * vdotd - (dot(v,v) - s.radius * s.radius);
+    if (vdotd > 0) {
+        h.didHit = false;
+        return h;
+    }
+    float discriminant = vdotd * vdotd - (dot(v, v) - s.radius * s.radius);
     if (discriminant < 0) {
         h.didHit = false;
         return h;
@@ -94,7 +97,7 @@ hit intersect(ray r, sphere s) {
     else {
         h.didHit = false;
         return h;
-    } 
+    }
     h.distance = t;
     h.hitPoint = r.origin + r.direction * t;
     h.normal = (h.hitPoint - s.center) / s.radius;
@@ -106,14 +109,13 @@ const int sphereNum = 6;
 sphere spheres[sphereNum];
 
 hit collision(ray r) {
-    float minDist = 1.0/0.0;
+    float minDist = 1.0 / 0.0;
     hit result;
     for (int i = 0; i < sphereNum; i++) {
         hit h = intersect(r, spheres[i]);
         if (h.didHit && h.distance < minDist) {
             minDist = h.distance;
             result = h;
-            //result.objectMaterial = spheres[i].material;
         }
     }
     return result;
@@ -129,16 +131,8 @@ float random(inout uint state)
 
 float randNormalDist(inout uint state) {
     float theta = radians(360.0) * random(state);
-    float rho = sqrt(-2 *log(random(state)));
+    float rho = sqrt(-2 * log(random(state)));
     return rho * cos(theta);
-}
-ray randHemisphereRay(vec3 origin, vec3 normal, inout uint state) {
-    ray r = createRay(origin, vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
-    //r.direction *= dot(r.direction, normal);
-    if (dot(r.direction, normal) < 0) {
-        r.direction *= vec3(-1, -1, -1);
-    }
-    return r;
 }
 vec3 randDirection(inout uint state) {
     return (vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
@@ -153,20 +147,16 @@ vec3 trace(ray r, inout uint state, int depth) {
         tracedHit = collision(tracedRay);
         if (!tracedHit.didHit) {
             break;
-        }            
+        }
         vec3 specularDir = tracedRay.direction - 2 * tracedHit.normal * (dot(tracedHit.normal, tracedRay.direction));
-        vec3 diffuseDir = randDirection(state)+ tracedHit.normal;
+        vec3 diffuseDir = randDirection(state) + tracedHit.normal;
         tracedRay = createRay(tracedHit.hitPoint, mix(diffuseDir, specularDir, tracedHit.objectMaterial.smoothness));
 
         totalIllumination += tracedHit.objectMaterial.emittance * rayColor;
-        
+
         rayColor *= tracedHit.objectMaterial.color;
 
 
-        //tracedRay = randHemisphereRay(tracedHit.hitPoint, tracedHit.normal, state);
-        //totalIllumination += tracedHit.objectMaterial.emittance*rayColor * dot(tracedRay.direction, tracedHit.normal) * 2;
-        //rayColor *= tracedHit.objectMaterial.color;
-        
     }
     return totalIllumination;
 }
@@ -180,18 +170,18 @@ uniform float sphereVertical;
 uniform vec3 camPos;
 
 void main() {
-	const int height = 1080;
-	const int width = 1080;
+    const int height = 1080;
+    const int width = 1080;
 
-	vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
+    vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
     uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x);
 
     camera c = createCamera(90, 1, camPos);
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
 
-    //sphere s1 = createSphere(3, vec3(10, 8, -13.5));
-    sphere s1 = createSphere(3, vec3(-3, 18, sphereVertical*-1));
+    sphere s1 = createSphere(3, vec3(10, 8, -13.5));
+    //sphere s1 = createSphere(3, vec3(-3, 18, sphereVertical * -1));
     sphere s2 = createSphere(1, vec3(-4, 0, -6));
     sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
     sphere s4 = createSphere(1, vec3(2, 0, -5));
@@ -199,7 +189,7 @@ void main() {
     sphere s6 = createSphere(1, vec3(5, 0, -4.5));
     s1.material.color = vec3(1, 1, 1);
     s1.material.emittance = vec3(1, 1, 1);
-    s2.material.emittance = vec3(0, 0, 0);
+    s2.material.emittance = vec3(0, 0, 1);
     s3.material.emittance = vec3(0, 0, 0);
     s4.material.emittance = vec3(0, 0, 0);
     s5.material.emittance = vec3(0, 0, 0);
@@ -208,11 +198,11 @@ void main() {
     s3.material.color = vec3(1, 1, 1);
     s4.material.color = vec3(1, 0, 0);
     s5.material.color = vec3(1, 1, 1);
-    s6.material.color = vec3(1, 1, 1);
+    s6.material.color = vec3(1, 0, 1);
     s1.material.smoothness = 0.0;
     s2.material.smoothness = 0.0;
-    s3.material.smoothness = 0.9;
-    s4.material.smoothness = 1.0;
+    s3.material.smoothness = 1.0;
+    s4.material.smoothness = 0.9;
     s5.material.smoothness = 0.0;
     s6.material.smoothness = 0.0;
     spheres[0] = s1;
@@ -223,28 +213,13 @@ void main() {
     spheres[5] = s6;
 
 
-    //hit sIntersect = collision(cameraRay);
+    int sampleNum = 300;
 
-    int sampleNum = 100;
-
-    vec3 totalLight = vec3(0,0,0);
+    vec3 totalLight = vec3(0, 0, 0);
     for (int i = 0; i < sampleNum; i++) {
         totalLight += trace(cameraRay, rngState, 30);
     }
     totalLight /= sampleNum;
     color = totalLight;
 
-    //one object intersect
-    //hit sIntersect = intersect(cameraRay,s);
-    /*if (sIntersect.didHit) {
-        color = vec3( 1,1,1 );
-    }
-    else {
-        color = vec3(0, 0, 0);
-    }*/
-    
-
-    //random color
-    //color = vec3(random(rngState), random(rngState), random(rngState));
-  
 }

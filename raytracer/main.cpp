@@ -7,7 +7,15 @@
 #include <sstream>
 #include <glm/vec3.hpp>
 #include <cstdlib>
+
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
 
 static std::string ParseShader(const std::string& filepath) {
     std::ifstream stream(filepath);
@@ -95,12 +103,33 @@ int main(void) {
         std::cout << "Error";
     }
 
-    float positions[8] = {
-        1, 1,
-        1, -1,
-        -1, -1,
-        -1, 1,
+    float positions[] = {
+        0.5, 0.5,       1, 1,
+        0.5, -0.5,      1, 0,
+        -0.5, -0,5,     0, 0,
+        -0.5, 0.5,      0, 1
     };
+
+    int texWidth, texHeight, nrChannels;
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    unsigned char* stbData = stbi_load("neuron.jpeg", &texWidth, &texHeight, &nrChannels, 0);
+    if (stbData)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, stbData);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(stbData);
 
     //unsigned int fbo;
     //glGenFramebuffers(1, &fbo);
@@ -125,7 +154,10 @@ int main(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, 0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     std::string vertexShader = ParseShader("shaders/vertex.shader");
     std::string fragmentShader = ParseShader("shaders/fragment.shader");
@@ -146,7 +178,14 @@ int main(void) {
     float previousTime = glfwGetTime();
     int fps = 0;
 
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+
+
     while (!glfwWindowShouldClose(window)) {
+
+        processInput(window);
+
         fps++;
         float currentTime = glfwGetTime();
         if (currentTime-previousTime >= 1.0) {
@@ -173,3 +212,5 @@ int main(void) {
     glfwTerminate();
     return 0;
 }
+
+
