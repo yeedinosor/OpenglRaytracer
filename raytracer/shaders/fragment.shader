@@ -1,5 +1,8 @@
 #version 330 core
 
+const int height = 1080;
+const int width = 1080;
+
 struct ray {
     bool noRay;
     vec3 direction;
@@ -135,10 +138,11 @@ float randNormalDist(inout uint state) {
     return rho * cos(theta);
 }
 vec3 randDirection(inout uint state) {
-    return (vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
+    return normalize(vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
 }
 
 vec3 trace(ray r, inout uint state, int depth) {
+
     vec3 totalIllumination = vec3(0, 0, 0);
     vec3 rayColor = vec3(1, 1, 1);
     ray tracedRay = r;
@@ -146,13 +150,15 @@ vec3 trace(ray r, inout uint state, int depth) {
     for (int i = 0; i < depth; i++) {
         tracedHit = collision(tracedRay);
         if (!tracedHit.didHit) {
+            vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
+            totalIllumination += vec3(0.529/pixelPosition.y, 0.808/ pixelPosition.y, 0.922/ pixelPosition.y);
             break;
         }
         vec3 specularDir = tracedRay.direction - 2 * tracedHit.normal * (dot(tracedHit.normal, tracedRay.direction));
-        vec3 diffuseDir = randDirection(state) + tracedHit.normal;
+        vec3 diffuseDir = randDirection(state)+tracedHit.normal;
         tracedRay = createRay(tracedHit.hitPoint, mix(diffuseDir, specularDir, tracedHit.objectMaterial.smoothness));
 
-        totalIllumination += tracedHit.objectMaterial.emittance * rayColor;
+        totalIllumination += tracedHit.objectMaterial.emittance * rayColor * pow(0.8,float(i));
 
         rayColor *= tracedHit.objectMaterial.color;
 
@@ -176,17 +182,17 @@ void main() {
     vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
     uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x);
-
-    camera c = createCamera(90, 1, camPos);
+    camera c = createCamera(90, 1, vec3(1,0,0));
+    //camera c = createCamera(90, 1, camPos);
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
 
-    sphere s1 = createSphere(3, vec3(10, 8, -13.5));
-    //sphere s1 = createSphere(3, vec3(-3, 18, sphereVertical * -1));
+    sphere s1 = createSphere(4, vec3(4, 15, 5));
+    //sphere s1 = createSphere(4, vec3(4, 15, sphereVertical * -1));
     sphere s2 = createSphere(1, vec3(-4, 0, -6));
     sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
     sphere s4 = createSphere(1, vec3(2, 0, -5));
     sphere s5 = createSphere(100, vec3(0, -101, 3));
-    sphere s6 = createSphere(1, vec3(5, 0, -4.5));
+    sphere s6 = createSphere(1, vec3(4, 0, -4.5));
     s1.material.color = vec3(1, 1, 1);
     s1.material.emittance = vec3(1, 1, 1);
     s2.material.emittance = vec3(0, 0, 1);
@@ -198,13 +204,15 @@ void main() {
     s3.material.color = vec3(1, 1, 1);
     s4.material.color = vec3(1, 0, 0);
     s5.material.color = vec3(1, 1, 1);
-    s6.material.color = vec3(1, 0, 1);
+    s6.material.color = vec3(0, 1, 0);
     s1.material.smoothness = 0.0;
     s2.material.smoothness = 0.0;
     s3.material.smoothness = 1.0;
-    s4.material.smoothness = 0.9;
+    s4.material.smoothness = 0.8;
     s5.material.smoothness = 0.0;
     s6.material.smoothness = 0.0;
+    /*spheres[0] = s1;
+    spheres[1] = s3;*/
     spheres[0] = s1;
     spheres[1] = s2;
     spheres[2] = s3;
@@ -213,7 +221,7 @@ void main() {
     spheres[5] = s6;
 
 
-    int sampleNum = 300;
+    int sampleNum = 100;
 
     vec3 totalLight = vec3(0, 0, 0);
     for (int i = 0; i < sampleNum; i++) {
