@@ -1,5 +1,7 @@
 #version 330 core
 
+#define epsilon 0.0000001
+
 const int height = 1080;
 const int width = 1080;
 
@@ -31,7 +33,19 @@ sphere createSphere(float r, vec3 c) {
     s.center = c;
     return s;
 }
-
+struct triangle{
+    vec3 v1;
+    vec3 v2;
+    vec3 v3;
+    material material;
+};
+triangle createTriangle(vec3 v1, vec3 v2, vec3 v3){
+    triangle tri;
+    tri.v1 = v1;
+    tri.v2 = v2;
+    tri.v3 = v3;
+    return tri;
+}
 struct camera {
     float fov;
     float aspectRatio;
@@ -73,7 +87,49 @@ struct hit {
     vec3 normal;
     material objectMaterial;
 };
-hit intersect(ray r, sphere s) {
+hit triangleIntersect(ray r, triangle tri) {
+    hit result;
+    vec3 edge1 = tri.v2 - tri.v1;
+    vec3 edge2 = tri.v3 - tri.v1;
+    vec3 h = cross(r.direction, edge2);
+    float a = dot(edge1, h);
+
+    if (a > -epsilon && a < epsilon) {
+        result.didHit = false;
+        return result;
+    }
+
+    float f = 1.0 / a;
+    vec3 s = r.origin - tri.v1;
+    float u = f * dot(s, h);
+
+    if (u < 0.0 || u > 1.0) {
+        result.didHit = false;
+        return result;
+    }
+
+    vec3 q = cross(s, edge1);
+    float v = f*dot(r.direction, q);
+
+    if (v < 0.0 || u + v > 1.0) {
+        result.didHit = false;
+        return result;
+    }
+
+    float t = f*dot(edge2,q);
+    if (t > epsilon) // ray intersection
+    {
+        result.hitPoint = r.origin + r.direction * t;
+        result.didHit = true;
+        result.distance = t;
+        result.objectMaterial = tri.material;
+        return result;
+    }else {
+        result.didHit = false;
+        return result;
+    }
+}
+hit sphereIntersect(ray r, sphere s) {
     hit h;
     float t = 0;
     vec3 v = r.origin - s.center;
@@ -115,7 +171,7 @@ hit collision(ray r) {
     float minDist = 1.0 / 0.0;
     hit result;
     for (int i = 0; i < sphereNum; i++) {
-        hit h = intersect(r, spheres[i]);
+        hit h = sphereIntersect(r, spheres[i]);
         if (h.didHit && h.distance < minDist) {
             minDist = h.distance;
             result = h;
@@ -158,7 +214,7 @@ vec3 trace(ray r, inout uint state, int depth) {
         vec3 diffuseDir = randDirection(state)+tracedHit.normal;
         tracedRay = createRay(tracedHit.hitPoint, mix(diffuseDir, specularDir, tracedHit.objectMaterial.smoothness));
 
-        totalIllumination += tracedHit.objectMaterial.emittance * rayColor * pow(0.8,float(i));
+        totalIllumination += tracedHit.objectMaterial.emittance * rayColor * pow(0.88,float(i));
 
         rayColor *= tracedHit.objectMaterial.color;
 
@@ -169,10 +225,10 @@ vec3 trace(ray r, inout uint state, int depth) {
 
 out vec3 color;
 
-//uniform vec3 uColor[];
+in vec2 textCoord;
+uniform sampler2D textureSampler;
 
 uniform float sphereVertical;
-
 uniform vec3 camPos;
 
 void main() {
@@ -186,7 +242,7 @@ void main() {
     //camera c = createCamera(90, 1, camPos);
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
 
-    sphere s1 = createSphere(4, vec3(4, 15, 5));
+    sphere s1 = createSphere(4, vec3(8, 15, 5));
     //sphere s1 = createSphere(4, vec3(4, 15, sphereVertical * -1));
     sphere s2 = createSphere(1, vec3(-4, 0, -6));
     sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
@@ -228,6 +284,10 @@ void main() {
         totalLight += trace(cameraRay, rngState, 30);
     }
     totalLight /= sampleNum;
-    color = totalLight;
+    color = mix(texture(textureSampler, textCoord).xyz, totalLight, 0.5);
+    triangle tri1 = createTriangle(vec3(1, 0, -4), vec3(0, 1, -10), vec3(-1, 0, -4));
+    /*if (triangleIntersect(cameraRay,tri1).didHit) {
+        color = vec3(0, 0, 0);
+    }*/
 
 }

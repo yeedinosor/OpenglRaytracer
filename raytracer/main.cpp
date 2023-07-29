@@ -66,16 +66,6 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
     return program;
 }
 
-static void CreateUniform3Floats(unsigned int shader, const std::string& name, unsigned int count, float* value) {
-    int location = glGetUniformLocation(shader, name.c_str());
-    //glUniform3f(location, 0.2f, 0.3f, 0.8f);
-    glUniform3fv(location, count, value);
-}
-static void CreateUniform1Float(unsigned int shader, const std::string& name, float value) {
-    int location = glGetUniformLocation(shader, name.c_str());
-    //glUniform3f(location, 0.2f, 0.3f, 0.8f);
-    glUniform1f(location, value);
-}
 
 int main(void) {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -104,15 +94,22 @@ int main(void) {
     }
 
     float positions[] = {
-        0.5, 0.5,       1, 1,
-        0.5, -0.5,      1, 0,
-        -0.5, -0,5,     0, 0,
-        -0.5, 0.5,      0, 1
+        -1, -1, 0.0, 0.0, 
+        1, -1, 1.0, 0.0,
+        1, 1, 1.0, 1.0,
+        -1, 1, 0.0, 1.0
+    };
+    
+    unsigned int indicies[] = {
+        0, 1, 2,
+        2, 3, 0
     };
 
+    stbi_set_flip_vertically_on_load(true);
     int texWidth, texHeight, nrChannels;
     unsigned int texture;
     glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     // set the texture wrapping/filtering options (on the currently bound texture object)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -122,7 +119,7 @@ int main(void) {
     unsigned char* stbData = stbi_load("neuron.jpeg", &texWidth, &texHeight, &nrChannels, 0);
     if (stbData)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, stbData);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, stbData);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -157,7 +154,13 @@ int main(void) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, 0);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, (void*)(2 * sizeof(float)));
+
+    unsigned int ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indicies, GL_STATIC_DRAW);
+
 
     std::string vertexShader = ParseShader("shaders/vertex.shader");
     std::string fragmentShader = ParseShader("shaders/fragment.shader");
@@ -165,20 +168,12 @@ int main(void) {
     unsigned int shader = CreateShader(vertexShader, fragmentShader);
     glUseProgram(shader);
 
-    float colorData[] = { 1,0,0,0,0,1 };
-
-    //CreateUniform3Floats(shader, "uColor", 2, colorData);
-    CreateUniform1Float(shader, "sphereVertical", 0.0);
-
-    glUniform3f(glGetUniformLocation(shader, "camPos"),0.0,0.0,0.0);
 
     float r = 0.01f;
     float increment = 1.0f;
 
     float previousTime = glfwGetTime();
     int fps = 0;
-
-    glBindTexture(GL_TEXTURE_2D, texture);
 
 
 
@@ -194,13 +189,14 @@ int main(void) {
             previousTime = currentTime;
         }
         glClear(GL_COLOR_BUFFER_BIT);
-        CreateUniform1Float(shader, "sphereVertical", r);
+        glUniform1f(glGetUniformLocation(shader, "sphereVertical"), r);
         glUniform3f(glGetUniformLocation(shader, "camPos"), r/6, 0.0, 0.0);
         if (r < -10.0f || r>20.0f) {
             increment *= -1;
         }
         
-        glDrawArrays(GL_QUADS, 0, 4);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         r += increment;
 
         glfwSwapBuffers(window);
