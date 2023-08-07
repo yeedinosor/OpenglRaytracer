@@ -71,8 +71,8 @@ int main(void) {
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
     GLFWwindow* window;
-    const int height = 1080;
-    const int width = 1080;
+    const int height = 2000;
+    const int width = 2000;
 
     if (!glfwInit())
         return -1;
@@ -80,7 +80,8 @@ int main(void) {
     //fullscreen
     //window = glfwCreateWindow(width, height, "Hello World", glfwGetPrimaryMonitor(), NULL);
 
-    window = glfwCreateWindow(width, height, "Hello World", monitor, NULL);
+    window = glfwCreateWindow(width, height, "yee", monitor, NULL);
+    
     if (!window) {
         glfwTerminate();
         return -1;
@@ -94,10 +95,10 @@ int main(void) {
     }
 
     float positions[] = {
-        -1, -1, 0.0, 0.0, 
-        1, -1, 1.0, 0.0,
-        1, 1, 1.0, 1.0,
-        -1, 1, 0.0, 1.0
+        -1.0, -1.0, 0.0, 0.0, 
+        1.0, -1.0, 1.0, 0.0,
+        1.0, 1.0, 1.0, 1.0,
+        -1.0, 1.0, 0.0, 1.0
     };
     
     unsigned int indicies[] = {
@@ -105,45 +106,59 @@ int main(void) {
         2, 3, 0
     };
 
-    stbi_set_flip_vertically_on_load(true);
-    int texWidth, texHeight, nrChannels;
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    unsigned char* stbData = stbi_load("neuron.jpeg", &texWidth, &texHeight, &nrChannels, 0);
-    if (stbData)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, stbData);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(stbData);
-
-    //unsigned int fbo;
-    //glGenFramebuffers(1, &fbo);
-    //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    //unsigned int screenTexture;
-    //glGenTextures(1, &screenTexture);
-    //glBindTexture(GL_TEXTURE_2D, screenTexture);
-    //// Set texture parameters and allocate storage if needed
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTexture, 0);
-
-    //if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    //    std::cout << "FRAMEBUFFER ERROR" << std::endl;
+    //stbi_set_flip_vertically_on_load(true);
+    //int texWidth, texHeight, nrChannels;
+    //unsigned int texture;
+    //glGenTextures(1, &texture);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, texture);
+    //// set the texture wrapping/filtering options (on the currently bound texture object)
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //unsigned char* stbData = stbi_load("neuron.jpeg", &texWidth, &texHeight, &nrChannels, 0);
+    //if (stbData)
+    //{
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texWidth, texHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, stbData);
+    //    glGenerateMipmap(GL_TEXTURE_2D);
     //}
+    //else
+    //{
+    //    std::cout << "Failed to load texture" << std::endl;
+    //}
+    //stbi_image_free(stbData);
 
-    //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+
+    unsigned int fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    unsigned int screenTexture;
+    glGenTextures(1, &screenTexture);
+    glBindTexture(GL_TEXTURE_2D, screenTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTexture, 0);
+
+    /*unsigned int framebuffer2;
+    glGenFramebuffers(1, &framebuffer2);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
+
+    unsigned int fbTexture2;
+    glGenTextures(1, &fbTexture2);
+    glBindTexture(GL_TEXTURE_2D, fbTexture2);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbTexture2, 0);*/
+
 
     unsigned int buffer;
     glGenBuffers(1, &buffer);
@@ -168,42 +183,64 @@ int main(void) {
     unsigned int shader = CreateShader(vertexShader, fragmentShader);
     glUseProgram(shader);
 
+    /*unsigned int copyShader = CreateShader(ParseShader("shaders/vertex.shader"), ParseShader("shaders/copy.shader"));
+    glUseProgram(copyShader);
+
+    unsigned int dispShader = CreateShader(ParseShader("shaders/vertex.shader"), ParseShader("shaders/disp.shader"));
+    glUseProgram(dispShader);*/
 
     float r = 0.01f;
     float increment = 1.0f;
 
     float previousTime = glfwGetTime();
     int fps = 0;
+    int frameNum = 0;
+   
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, screenTexture);
 
-
+    /*glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, fbTexture2);*/
 
     while (!glfwWindowShouldClose(window)) {
 
         processInput(window);
-
         fps++;
         float currentTime = glfwGetTime();
         if (currentTime-previousTime >= 1.0) {
+            glfwSetWindowTitle(window, std::to_string(fps).c_str());
             std::cout << fps << " fps, "<<1000/fps<<" ms"<< std::endl;
             fps = 0;
             previousTime = currentTime;
         }
-        glClear(GL_COLOR_BUFFER_BIT);
+        
         glUniform1f(glGetUniformLocation(shader, "sphereVertical"), r);
+        
+        
         glUniform3f(glGetUniformLocation(shader, "camPos"), r/6, 0.0, 0.0);
         if (r < -10.0f || r>20.0f) {
             increment *= -1;
         }
-        
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         r += increment;
+        
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glUniform1i(glGetUniformLocation(shader, "directOutPass"), 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        frameNum++;        
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glUniform1i(glGetUniformLocation(shader, "directOutPass"), 1);
+        glUniform1ui(glGetUniformLocation(shader, "frameNumber"), frameNum);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+
     glDeleteProgram(shader);
+
 
     glfwTerminate();
     return 0;

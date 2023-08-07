@@ -25,6 +25,8 @@
   <ItemGroup>
     <None Include="shaders\vertex.shader" />
     <None Include="shaders\fragment.shader" />
+    <None Include="shaders\copy.shader" />
+    <None Include="shaders\disp.shader" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libraries\lib\glfw3.lib" />

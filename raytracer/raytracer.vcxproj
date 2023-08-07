@@ -137,6 +137,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.shader" />
+    <None Include="shaders\copy.shader" />
+    <None Include="shaders\disp.shader" />
     <None Include="shaders\vertex.shader" />
   </ItemGroup>
   <ItemGroup>

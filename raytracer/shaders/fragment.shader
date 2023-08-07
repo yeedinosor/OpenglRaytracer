@@ -167,6 +167,9 @@ hit sphereIntersect(ray r, sphere s) {
 const int sphereNum = 6;
 sphere spheres[sphereNum];
 
+const int triangleNum = 3;
+triangle triangles[triangleNum];
+
 hit collision(ray r) {
     float minDist = 1.0 / 0.0;
     hit result;
@@ -177,6 +180,7 @@ hit collision(ray r) {
             result = h;
         }
     }
+    
     return result;
 }
 
@@ -226,29 +230,31 @@ vec3 trace(ray r, inout uint state, int depth) {
 out vec3 color;
 
 in vec2 textCoord;
-uniform sampler2D textureSampler;
+uniform sampler2D screenTexture;
 
+uniform bool directOutPass;
 uniform float sphereVertical;
+uniform uint frameNumber;
 uniform vec3 camPos;
 
 void main() {
-    const int height = 1080;
-    const int width = 1080;
+    const int height = 2000;
+    const int width = 2000;
 
     vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
-    uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x);
+    uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x)+frameNumber*uint(719393);
     camera c = createCamera(90, 1, vec3(1,0,0));
     //camera c = createCamera(90, 1, camPos);
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
 
     sphere s1 = createSphere(4, vec3(8, 15, 5));
     //sphere s1 = createSphere(4, vec3(4, 15, sphereVertical * -1));
-    sphere s2 = createSphere(1, vec3(-4, 0, -6));
+    sphere s2 = createSphere(1.5, vec3(-2.3, -1, -3));
     sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
     sphere s4 = createSphere(1, vec3(2, 0, -5));
     sphere s5 = createSphere(100, vec3(0, -101, 3));
-    sphere s6 = createSphere(1, vec3(4, 0, -4.5));
+    sphere s6 = createSphere(2, vec3(5, 1, -3.5));
     s1.material.color = vec3(1, 1, 1);
     s1.material.emittance = vec3(1, 1, 1);
     s2.material.emittance = vec3(0, 0, 1);
@@ -258,9 +264,9 @@ void main() {
     s6.material.emittance = vec3(0, 0, 0);
     s2.material.color = vec3(0, 0, 1);
     s3.material.color = vec3(1, 1, 1);
-    s4.material.color = vec3(1, 0, 0);
+    s4.material.color = vec3(1, 0.3, 0.3);
     s5.material.color = vec3(1, 1, 1);
-    s6.material.color = vec3(0, 1, 0);
+    s6.material.color = vec3(0.3, 1, 0.3);
     s1.material.smoothness = 0.0;
     s2.material.smoothness = 0.0;
     s3.material.smoothness = 1.0;
@@ -277,17 +283,42 @@ void main() {
     spheres[5] = s6;
 
 
-    int sampleNum = 100;
+    int sampleNum = 1;
 
     vec3 totalLight = vec3(0, 0, 0);
     for (int i = 0; i < sampleNum; i++) {
-        totalLight += trace(cameraRay, rngState, 30);
+        totalLight += trace(cameraRay, rngState, 100 );
     }
     totalLight /= sampleNum;
-    color = mix(texture(textureSampler, textCoord).xyz, totalLight, 0.5);
+    //color = totalLight;
+
+
+    if (directOutPass) {
+        color = texture(screenTexture, textCoord).xyz;// / vec3(10, 10, 10);
+    }
+    else {
+        color = totalLight/frameNumber;
+        if (frameNumber > uint(0)) {
+            color += texture(screenTexture, textCoord).xyz*(frameNumber-uint(1))/frameNumber;
+        }
+    }
+
+
+
+    /*if (useTexture) {
+        color = texture(textureSampler, textCoord).xyz;
+    }
+    else {
+        color = totalLight/frameNumber;
+        if (frameNumber > uint(0)) {
+            color += texture(textureSampler, textCoord).xyz;
+        }
+    }*/
+
     triangle tri1 = createTriangle(vec3(1, 0, -4), vec3(0, 1, -10), vec3(-1, 0, -4));
     /*if (triangleIntersect(cameraRay,tri1).didHit) {
         color = vec3(0, 0, 0);
     }*/
-
+    //color = ((frameNumber-uint(1))*texture(textureSampler, textCoord).xyz+ totalLight)/frameNumber*10;
+    //color = mix(totalLight, texture(textureSampler, textCoord).xyz, uint(1) / frameNumber);
 }
