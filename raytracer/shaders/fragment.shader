@@ -123,6 +123,7 @@ hit triangleIntersect(ray r, triangle tri) {
         result.didHit = true;
         result.distance = t;
         result.objectMaterial = tri.material;
+        result.normal = h * sign(dot(h, r.direction)); //may need to change
         return result;
     }else {
         result.didHit = false;
@@ -164,7 +165,7 @@ hit sphereIntersect(ray r, sphere s) {
     return h;
 }
 
-const int sphereNum = 6;
+const int sphereNum = 50;
 sphere spheres[sphereNum];
 
 const int triangleNum = 3;
@@ -244,43 +245,65 @@ void main() {
     vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
     uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x)+frameNumber*uint(719393);
-    camera c = createCamera(90, 1, vec3(1,0,0));
+    //uint rngState2 = uint(round(float(frameNumber)/7.0));
+    uint rngState2 = uint(4);
+    camera c = createCamera(90, 1, vec3(0, 5, 3));
     //camera c = createCamera(90, 1, camPos);
-    ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
+    ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y-0.5, c);
 
     sphere s1 = createSphere(4, vec3(8, 15, 5));
-    //sphere s1 = createSphere(4, vec3(4, 15, sphereVertical * -1));
-    sphere s2 = createSphere(1.5, vec3(-2.3, -1, -3));
-    sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
-    sphere s4 = createSphere(1, vec3(2, 0, -5));
-    sphere s5 = createSphere(100, vec3(0, -101, 3));
-    sphere s6 = createSphere(2, vec3(5, 1, -3.5));
     s1.material.color = vec3(1, 1, 1);
     s1.material.emittance = vec3(1, 1, 1);
-    s2.material.emittance = vec3(0, 0, 1);
-    s3.material.emittance = vec3(0, 0, 0);
-    s4.material.emittance = vec3(0, 0, 0);
-    s5.material.emittance = vec3(0, 0, 0);
-    s6.material.emittance = vec3(0, 0, 0);
-    s2.material.color = vec3(0, 0, 1);
-    s3.material.color = vec3(1, 1, 1);
-    s4.material.color = vec3(1, 0.3, 0.3);
-    s5.material.color = vec3(1, 1, 1);
-    s6.material.color = vec3(0.3, 1, 0.3);
     s1.material.smoothness = 0.0;
-    s2.material.smoothness = 0.0;
-    s3.material.smoothness = 1.0;
-    s4.material.smoothness = 0.8;
-    s5.material.smoothness = 0.0;
-    s6.material.smoothness = 0.0;
-    /*spheres[0] = s1;
-    spheres[1] = s3;*/
     spheres[0] = s1;
+    sphere s2 = createSphere(50, vec3(0, -50, 3));
+    s2.material.color = vec3(1, 1, 1);
+    s2.material.emittance = vec3(0, 0, 0);
+    s2.material.smoothness = 0.0;
     spheres[1] = s2;
-    spheres[2] = s3;
-    spheres[3] = s4;
-    spheres[4] = s5;
-    spheres[5] = s6;
+    for (int i = 2; i < sphereNum; i++) {
+        spheres[i] = createSphere(random(rngState2)/2, vec3(random(rngState2)*10-5, random(rngState2), random(rngState2)*5-5));
+        spheres[i].material.color = vec3(random(rngState2), random(rngState2), random(rngState2));
+        spheres[i].material.emittance = vec3(0, 0, 0);
+        spheres[i].material.smoothness = random(rngState2);
+    }
+
+    //sphere s1 = createSphere(4, vec3(8, 15, 5));
+    ////sphere s1 = createSphere(4, vec3(4, 15, sphereVertical * -1));
+    //sphere s2 = createSphere(1.5, vec3(-3, 1.5, -3));
+    //sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
+    //sphere s4 = createSphere(1, vec3(2, 0, -5));
+    //sphere s5 = createSphere(100, vec3(0, -101, 3));
+    //sphere s6 = createSphere(2, vec3(5, 1, -3.5));
+    //sphere s7 = createSphere(1, vec3(0, 1, 0));
+    //s1.material.color = vec3(1, 1, 1);
+    //s1.material.emittance = vec3(1, 1, 1);
+    //s2.material.emittance = vec3(0, 0, 1);
+    //s3.material.emittance = vec3(0, 0, 0);
+    //s4.material.emittance = vec3(0, 0, 0);
+    //s5.material.emittance = vec3(0, 0, 0);
+    //s6.material.emittance = vec3(0, 0, 0);
+    //s2.material.color = vec3(0, 0, 1);
+    //s3.material.color = vec3(1, 1, 1);
+    //s4.material.color = vec3(1, 1, 1);
+    //s5.material.color = vec3(1, 1, 1);
+    //s6.material.color = vec3(0.3, 1, 0.3);
+    //s1.material.smoothness = 0.0;
+    //s2.material.smoothness = 0.0;
+    //s3.material.smoothness = 1.0;
+    //s4.material.smoothness = 0.0;
+    //s5.material.smoothness = 0.0;
+    //s6.material.smoothness = 0.0;
+    //s7.material.smoothness = 0.8;
+
+    ///*spheres[0] = s1;
+    //spheres[1] = s3;*/
+    //spheres[0] = s1;
+    //spheres[1] = s2;
+    //spheres[2] = s3;
+    //spheres[3] = s4;
+    //spheres[4] = s5;
+    //spheres[5] = s6;
 
 
     int sampleNum = 1;
