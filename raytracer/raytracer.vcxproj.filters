@@ -25,8 +25,6 @@
   <ItemGroup>
     <None Include="shaders\vertex.shader" />
     <None Include="shaders\fragment.shader" />
-    <None Include="shaders\copy.shader" />
-    <None Include="shaders\disp.shader" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="libraries\lib\glfw3.lib" />
@@ -47,5 +45,11 @@
     <Image Include="container.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Text.txt" />
+    <Text Include="bunny.txt" />
+    <Text Include="Text1.txt" />
+    <Text Include="ico.txt" />
   </ItemGroup>
 </Project>

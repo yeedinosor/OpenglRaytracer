@@ -7,9 +7,40 @@
 #include <sstream>
 #include <glm/vec3.hpp>
 #include <cstdlib>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+
+
+struct objectData {
+    std::vector<float> vert;
+    std::vector<int> face;
+};
+
+objectData readObj(const std::string& filepath) {
+    objectData data;
+    std::ifstream stream(filepath);
+    std::string line;
+    std::string x, y, z;
+    while (getline(stream, line)) {
+        std::stringstream ss{ line };
+        char ch;
+        ss >> ch;
+        ss >> x >> y >> z;
+        if (ch == 'v') {
+            data.vert.push_back(std::stof(x));
+            data.vert.push_back(std::stof(y));
+            data.vert.push_back(std::stof(z));
+        }
+        else if (ch == 'f') {
+            data.face.push_back(std::stoi(x));
+            data.face.push_back(std::stoi(y));
+            data.face.push_back(std::stoi(z));
+        }
+    }
+    return data;
+}
 
 void processInput(GLFWwindow* window)
 {
@@ -68,6 +99,9 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 
 
 int main(void) {
+
+    
+
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
     GLFWwindow* window;
@@ -145,20 +179,6 @@ int main(void) {
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenTexture, 0);
 
-    /*unsigned int framebuffer2;
-    glGenFramebuffers(1, &framebuffer2);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
-
-    unsigned int fbTexture2;
-    glGenTextures(1, &fbTexture2);
-    glBindTexture(GL_TEXTURE_2D, fbTexture2);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbTexture2, 0);*/
-
 
     unsigned int buffer;
     glGenBuffers(1, &buffer);
@@ -183,11 +203,15 @@ int main(void) {
     unsigned int shader = CreateShader(vertexShader, fragmentShader);
     glUseProgram(shader);
 
-    /*unsigned int copyShader = CreateShader(ParseShader("shaders/vertex.shader"), ParseShader("shaders/copy.shader"));
-    glUseProgram(copyShader);
+    objectData d = readObj("ico.txt");
 
-    unsigned int dispShader = CreateShader(ParseShader("shaders/vertex.shader"), ParseShader("shaders/disp.shader"));
-    glUseProgram(dispShader);*/
+    std::cout << d.vert.size() << " " << d.face.size() << " ";
+
+    glUniform3fv(glGetUniformLocation(shader, "verticies"), d.vert.size(), &d.vert[0]);
+    glUniform1i(glGetUniformLocation(shader, "verticiesSize"), d.vert.size());
+    
+    glUniform3iv(glGetUniformLocation(shader, "faces"), d.face.size(), &d.face[0]);
+    glUniform1i(glGetUniformLocation(shader, "facesSize"), d.face.size());
 
     float r = 0.01f;
     float increment = 1.0f;
@@ -199,8 +223,6 @@ int main(void) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, screenTexture);
 
-    /*glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, fbTexture2);*/
 
     while (!glfwWindowShouldClose(window)) {
 

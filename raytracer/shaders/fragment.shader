@@ -22,15 +22,24 @@ struct material {
     vec3 emittance;
     float smoothness;
 };
+material createMaterial(vec3 c, vec3 e, float s) {
+    material m;
+    m.color = c;
+    m.emittance = e;
+    m.smoothness = s;
+    return m;
+}
+
 struct sphere {
     float radius;
     vec3 center;
     material material;
 };
-sphere createSphere(float r, vec3 c) {
+sphere createSphere(float r, vec3 c, material m) {
     sphere s;
     s.radius = r;
     s.center = c;
+    s.material = m;
     return s;
 }
 struct triangle{
@@ -39,11 +48,12 @@ struct triangle{
     vec3 v3;
     material material;
 };
-triangle createTriangle(vec3 v1, vec3 v2, vec3 v3){
+triangle createTriangle(vec3 v1, vec3 v2, vec3 v3, material m){
     triangle tri;
     tri.v1 = v1;
     tri.v2 = v2;
     tri.v3 = v3;
+    tri.material = m;
     return tri;
 }
 struct camera {
@@ -87,6 +97,7 @@ struct hit {
     vec3 normal;
     material objectMaterial;
 };
+uniform uint frameNumber;
 hit triangleIntersect(ray r, triangle tri) {
     hit result;
     vec3 edge1 = tri.v2 - tri.v1;
@@ -123,7 +134,14 @@ hit triangleIntersect(ray r, triangle tri) {
         result.didHit = true;
         result.distance = t;
         result.objectMaterial = tri.material;
-        result.normal = h * sign(dot(h, r.direction)); //may need to change
+        vec3 N = normalize(cross(edge1,edge2));
+        float normalDot = dot(N, N);
+        result.normal = N;
+        if (false)
+            result.normal = -N; //may need to change
+        /*}else if (a < 0) {
+            result.normal = N;
+        }*/
         return result;
     }else {
         result.didHit = false;
@@ -165,10 +183,11 @@ hit sphereIntersect(ray r, sphere s) {
     return h;
 }
 
-const int sphereNum = 50;
+const int sphereNum = 1;
 sphere spheres[sphereNum];
 
-const int triangleNum = 3;
+
+const int triangleNum = 83;
 triangle triangles[triangleNum];
 
 hit collision(ray r) {
@@ -181,7 +200,13 @@ hit collision(ray r) {
             result = h;
         }
     }
-    
+    for (int i = 0; i < triangleNum; i++) {
+        hit h = triangleIntersect(r, triangles[i]);
+        if (h.didHit && h.distance < minDist) {
+            minDist = h.distance;
+            result = h;
+        }
+    }
     return result;
 }
 
@@ -218,7 +243,7 @@ vec3 trace(ray r, inout uint state, int depth) {
         vec3 specularDir = tracedRay.direction - 2 * tracedHit.normal * (dot(tracedHit.normal, tracedRay.direction));
         vec3 diffuseDir = randDirection(state)+tracedHit.normal;
         tracedRay = createRay(tracedHit.hitPoint, mix(diffuseDir, specularDir, tracedHit.objectMaterial.smoothness));
-
+        //tracedRay.direction = -tracedHit.hitPoint + spheres[0].center;
         totalIllumination += tracedHit.objectMaterial.emittance * rayColor * pow(0.88,float(i));
 
         rayColor *= tracedHit.objectMaterial.color;
@@ -235,8 +260,13 @@ uniform sampler2D screenTexture;
 
 uniform bool directOutPass;
 uniform float sphereVertical;
-uniform uint frameNumber;
+
 uniform vec3 camPos;
+uniform vec3 verticies[47];
+uniform ivec3 faces[83];
+uniform int verticiesSize;
+uniform int facesSize;
+
 
 void main() {
     const int height = 2000;
@@ -246,78 +276,24 @@ void main() {
 
     uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x)+frameNumber*uint(719393);
     //uint rngState2 = uint(round(float(frameNumber)/7.0));
-    uint rngState2 = uint(4);
-    camera c = createCamera(90, 1, vec3(0, 5, 3));
+    uint rngState2 = uint(2);
+    camera c = createCamera(90, 1, vec3(0, 0, 4));
     //camera c = createCamera(90, 1, camPos);
-    ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y-0.5, c);
+    ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
+    spheres[0] = createSphere(4, vec3(-4,4,4), createMaterial(vec3(1, 1, 1), vec3(1, 1, 1), 0));
+    /*for (int i = 1; i < sphereNum; i++) {
+        spheres[i] = createSphere(random(rngState2)/2, vec3(random(rngState2)*10-5, random(rngState2), random(rngState2)*6-10), createMaterial(vec3(random(rngState2), random(rngState2), random(rngState2)), vec3(0, 0, 0), random(rngState2)));
+    }*/
+    for (int i = 0; i < triangleNum; i++) { //make sure to -1 when using obj files
+        triangles[i] = createTriangle(verticies[faces[i].x-1], verticies[faces[i].y-1], verticies[faces[i].z-1], createMaterial(vec3(1,1,1), vec3(0, 0, 0), 0.0));
+        //triangles[i] = createTriangle(verticies[faces[i].x], verticies[faces[i].y], verticies[faces[i].z], createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0.0));
+    }   
 
-    sphere s1 = createSphere(4, vec3(8, 15, 5));
-    s1.material.color = vec3(1, 1, 1);
-    s1.material.emittance = vec3(1, 1, 1);
-    s1.material.smoothness = 0.0;
-    spheres[0] = s1;
-    sphere s2 = createSphere(50, vec3(0, -50, 3));
-    s2.material.color = vec3(1, 1, 1);
-    s2.material.emittance = vec3(0, 0, 0);
-    s2.material.smoothness = 0.0;
-    spheres[1] = s2;
-    for (int i = 2; i < sphereNum; i++) {
-        spheres[i] = createSphere(random(rngState2)/2, vec3(random(rngState2)*10-5, random(rngState2), random(rngState2)*5-5));
-        spheres[i].material.color = vec3(random(rngState2), random(rngState2), random(rngState2));
-        spheres[i].material.emittance = vec3(0, 0, 0);
-        spheres[i].material.smoothness = random(rngState2);
-    }
-
-    //sphere s1 = createSphere(4, vec3(8, 15, 5));
-    ////sphere s1 = createSphere(4, vec3(4, 15, sphereVertical * -1));
-    //sphere s2 = createSphere(1.5, vec3(-3, 1.5, -3));
-    //sphere s3 = createSphere(1, vec3(-1, 0, -5.5));
-    //sphere s4 = createSphere(1, vec3(2, 0, -5));
-    //sphere s5 = createSphere(100, vec3(0, -101, 3));
-    //sphere s6 = createSphere(2, vec3(5, 1, -3.5));
-    //sphere s7 = createSphere(1, vec3(0, 1, 0));
-    //s1.material.color = vec3(1, 1, 1);
-    //s1.material.emittance = vec3(1, 1, 1);
-    //s2.material.emittance = vec3(0, 0, 1);
-    //s3.material.emittance = vec3(0, 0, 0);
-    //s4.material.emittance = vec3(0, 0, 0);
-    //s5.material.emittance = vec3(0, 0, 0);
-    //s6.material.emittance = vec3(0, 0, 0);
-    //s2.material.color = vec3(0, 0, 1);
-    //s3.material.color = vec3(1, 1, 1);
-    //s4.material.color = vec3(1, 1, 1);
-    //s5.material.color = vec3(1, 1, 1);
-    //s6.material.color = vec3(0.3, 1, 0.3);
-    //s1.material.smoothness = 0.0;
-    //s2.material.smoothness = 0.0;
-    //s3.material.smoothness = 1.0;
-    //s4.material.smoothness = 0.0;
-    //s5.material.smoothness = 0.0;
-    //s6.material.smoothness = 0.0;
-    //s7.material.smoothness = 0.8;
-
-    ///*spheres[0] = s1;
-    //spheres[1] = s3;*/
-    //spheres[0] = s1;
-    //spheres[1] = s2;
-    //spheres[2] = s3;
-    //spheres[3] = s4;
-    //spheres[4] = s5;
-    //spheres[5] = s6;
-
-
-    int sampleNum = 1;
-
-    vec3 totalLight = vec3(0, 0, 0);
-    for (int i = 0; i < sampleNum; i++) {
-        totalLight += trace(cameraRay, rngState, 100 );
-    }
-    totalLight /= sampleNum;
-    //color = totalLight;
+    vec3 totalLight = trace(cameraRay, rngState, 20);
 
 
     if (directOutPass) {
-        color = texture(screenTexture, textCoord).xyz;// / vec3(10, 10, 10);
+        color = texture(screenTexture, textCoord).xyz;
     }
     else {
         color = totalLight/frameNumber;
@@ -326,22 +302,4 @@ void main() {
         }
     }
 
-
-
-    /*if (useTexture) {
-        color = texture(textureSampler, textCoord).xyz;
-    }
-    else {
-        color = totalLight/frameNumber;
-        if (frameNumber > uint(0)) {
-            color += texture(textureSampler, textCoord).xyz;
-        }
-    }*/
-
-    triangle tri1 = createTriangle(vec3(1, 0, -4), vec3(0, 1, -10), vec3(-1, 0, -4));
-    /*if (triangleIntersect(cameraRay,tri1).didHit) {
-        color = vec3(0, 0, 0);
-    }*/
-    //color = ((frameNumber-uint(1))*texture(textureSampler, textCoord).xyz+ totalLight)/frameNumber*10;
-    //color = mix(totalLight, texture(textureSampler, textCoord).xyz, uint(1) / frameNumber);
 }

@@ -137,8 +137,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.shader" />
-    <None Include="shaders\copy.shader" />
-    <None Include="shaders\disp.shader" />
     <None Include="shaders\vertex.shader" />
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +150,12 @@
   <ItemGroup>
     <Image Include="container.jpg" />
     <Image Include="neuron.jpeg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="bunny.txt" />
+    <Text Include="ico.txt" />
+    <Text Include="Text.txt" />
+    <Text Include="Text1.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
