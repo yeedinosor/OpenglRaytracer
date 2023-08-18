@@ -13,7 +13,7 @@ glsl ray tracer / path tracer
 
 
 <p>knight with less samples:</p>
-<img width="258" alt="Screenshot 2023-08-17 213711" src="https://github.com/yeedinosor/raytracer/assets/123328935/f989d26f-68dc-4c3a-96e6-7c4252ac3376" align="center">
+<img width="342" alt="Screenshot 2023-08-17 214617" src="https://github.com/yeedinosor/raytracer/assets/123328935/456d6832-cda1-4a34-acb4-f5d676e9d1c2">
 
 
 <p>knight with more samples:</p>
