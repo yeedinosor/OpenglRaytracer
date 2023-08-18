@@ -1,7 +1,7 @@
 # raytracer
 
 
-glsl ray tracer / path tracer
+gpu accelerated ray tracer / path tracer
 
 
 
