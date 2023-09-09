@@ -11,7 +11,8 @@ opengl ray tracer / path tracer
 
 
 <p>knight:</p>
-<img width="258" alt="Screenshot 2023-08-17 213711" src="https://github.com/yeedinosor/raytracer/assets/123328935/f989d26f-68dc-4c3a-96e6-7c4252ac3376" align="center">
+<img width="342" alt="Screenshot 2023-08-17 214617" src="https://github.com/yeedinosor/raytracer/assets/123328935/d729a443-bb04-4239-b4f7-6b89741352c2">
+
 
 <p>icosphere:</p>
 <img width="534" alt="Screenshot 2023-08-17 214200" src="https://github.com/yeedinosor/raytracer/assets/123328935/1d55a71c-806a-474d-aaa7-7ae6d13fb2e6" align="center">
