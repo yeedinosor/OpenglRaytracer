@@ -389,6 +389,57 @@ sphere spheres[sphereNum];
 //const int triangleNum = 1;
 //triangle triangles[triangleNum];
 
+const bool useBox = true;
+
+vec3 boxVertices[8] = {
+    vec3(3.000000, 3.000000, -3.000000),
+    vec3(3.000000, -3.000000, -3.000000),
+    vec3(3.000000, 3.000000, 3.000000),
+    vec3(3.000000, -3.000000, 3.000000),
+    vec3(-3.000000, 3.000000, -3.000000), 
+    vec3(-3.000000, -3.000000, -3.000000),
+    vec3(-3.000000, 3.000000, 3.000000),
+    vec3(-3.000000, -3.000000, 3.000000)
+};
+ivec3 boxIndices[12] = {
+    ivec3(3, 5, 1),
+    ivec3(6, 7, 8),
+    ivec3(8, 2, 6),
+    ivec3(4, 1, 2),
+    ivec3(2, 5, 6), 
+    ivec3(7, 5, 3),
+    ivec3(5, 7, 6), 
+    ivec3(4, 2, 8),
+    ivec3(3, 1, 4),
+    ivec3(1, 5, 2), 
+    ivec3(8, 3, 4),
+    ivec3(7, 3, 8)
+};
+vec3 boxColor[12] = {
+    vec3(1,1,1),
+    vec3(1,0,0),
+    vec3(1,1,1),
+    vec3(0,1,0),
+    vec3(1,1,1),
+    vec3(1,1,1),
+    vec3(1,0,0),
+    vec3(1,1,1),
+    vec3(0,1,0),
+    vec3(1,1,1),
+    vec3(1,1,1),
+    vec3(1,1,1)
+};
+vec3 planeVertices[4] = {
+    vec3(-1.00000, 2.9, 1.00000),
+    vec3(1.00000, 2.9, 1.00000),
+    vec3(-1.00000, 2.9, - 1.00000),
+    vec3(1.00000, 2.9, - 1.00000)
+};
+ivec3 planeIndices[2] = {
+    ivec3(2, 3, 1),
+    ivec3(2, 4, 3)
+};
+
 hit collision(ray r) {
     float minDist = 1.0 / 0.0;
     hit result;
@@ -413,6 +464,24 @@ hit collision(ray r) {
         if (h.didHit && h.distance < minDist) {
             minDist = h.distance;
             result = h;
+        }
+    }
+    if (useBox) {
+        for (int i = 0; i < 12; i++) {
+            hit h;
+            h = triangleIntersect(r, createTriangle(boxVertices[boxIndices[i].x - 1], boxVertices[boxIndices[i].y - 1], boxVertices[boxIndices[i].z - 1], createMaterial(vec3(boxColor[i].x, boxColor[i].y, boxColor[i].z), vec3(0, 0, 0), 0.0)));
+            if (h.didHit && h.distance < minDist) {
+                minDist = h.distance;
+                result = h;
+            }
+        }
+        for (int i = 0; i < 2; i++) {
+            hit h;
+            h = triangleIntersect(r, createTriangle(planeVertices[planeIndices[i].x - 1], planeVertices[planeIndices[i].y - 1], planeVertices[planeIndices[i].z - 1], createMaterial(vec3(1, 1, 1), vec3(1, 1, 1), 0.0)));
+            if (h.didHit && h.distance < minDist) {
+                minDist = h.distance;
+                result = h;
+            }
         }
     }
     return result;
@@ -456,11 +525,11 @@ void main() {
     uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x)+uint(frameNumber)*uint(719393);
     uint rngState2 = uint(2);
 
-    camera c = createCamera(90, 1, vec3(-1, 0, 2));
-    //camera c = createCamera(90, 1, vec3(0, 0, 2));
+    //camera c = createCamera(90, 1, vec3(-1, 0, 2));
+    camera c = createCamera(90, 1, vec3(0, 0, 3));
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
-    cameraRay.direction = quaternionRotation(vec3(0, 1, 0), cameraRay.direction, -10);
-    spheres[0] = createSphere(2, vec3(-4,4,4), createMaterial(vec3(1, 1, 1), vec3(1, 1, 1), 0.0));
+    //cameraRay.direction = quaternionRotation(vec3(0, 1, 0), cameraRay.direction, -10);
+    //spheres[0] = createSphere(2, vec3(-4,4,4), createMaterial(vec3(1, 1, 1), vec3(1, 1, 1), 0.0));
     //spheres[1] = createSphere(2, vec3(0, 0, 0), createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0));
     
     /*for (int i = 0; i < triangleNum; i++) {
@@ -483,7 +552,7 @@ void main() {
         spheres[i] = createSphere(random(rngState2)/2, vec3(random(rngState2)*10-5, random(rngState2), random(rngState2)*6-10), createMaterial(vec3(random(rngState2), random(rngState2), random(rngState2)), vec3(0, 0, 0), random(rngState2)));
     }*/
     
-    vec3 totalLight = trace(cameraRay, rngState, 10);
+    vec3 totalLight = trace(cameraRay, rngState, 5);
 
     color = totalLight;
 
