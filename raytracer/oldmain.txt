@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <cstdlib>
 #include <vector>
 
@@ -14,13 +14,11 @@
 
 #define useNormals false
 
-using namespace glm;
-
 struct objectData {
-    std::vector<vec3> vert;
-    std::vector<ivec3> face;
-    //std::vector<float> normal;
-    //std::vector<int> normalIndex;
+    std::vector<float> vert;
+    std::vector<int> face;
+    std::vector<float> normal;
+    std::vector<int> normalIndex;
 };
 
 objectData readObj(const std::string& filepath) {
@@ -34,55 +32,51 @@ objectData readObj(const std::string& filepath) {
         ss >> ch;
         ss >> x >> y >> z;
         if (ch == 'v') {
-            vec3 vertex;
-            vertex.x = std::stof(x);
-            vertex.y = std::stof(y);
-            vertex.z = std::stof(z);
-            data.vert.push_back(vertex);
+            data.vert.push_back(std::stof(x));
+            data.vert.push_back(std::stof(y));
+            data.vert.push_back(std::stof(z));
         }
         else if (ch == 'f') {
-            vec3 face;
-            face.x = std::stof(x);
-            face.y = std::stof(y);
-            face.z = std::stof(z);
-            data.face.push_back(face);
+            data.face.push_back(std::stoi(x));
+            data.face.push_back(std::stoi(y));
+            data.face.push_back(std::stoi(z));
         }
     }
     return data;
 }
 
-//objectData readObjWithNormals(const std::string& filepath) {
-//    objectData data;
-//    std::ifstream stream(filepath);
-//    std::string line;
-//    std::string x, y, z;
-//    while (getline(stream, line)) {
-//        std::stringstream ss{ line };
-//        std::string ch;
-//        ss >> ch;
-//        ss >> x >> y >> z;
-//        if (ch == "v") {
-//            data.vert.push_back(std::stof(x));
-//            data.vert.push_back(std::stof(y));
-//            data.vert.push_back(std::stof(z));
-//        }
-//        else if (ch == "f") {
-//            data.face.push_back(std::stoi(x));
-//            data.normalIndex.push_back(std::stoi(y));
-//            data.face.push_back(std::stoi(z));
-//            ss >> x >> y >> z;
-//            data.normalIndex.push_back(std::stoi(x));
-//            data.face.push_back(std::stoi(y));
-//            data.normalIndex.push_back(std::stoi(z));
-//        }
-//        else if (ch == "vn") {
-//            data.normal.push_back(std::stof(x));
-//            data.normal.push_back(std::stof(y));
-//            data.normal.push_back(std::stof(z));
-//        }
-//    }
-//    return data;
-//}
+objectData readObjWithNormals(const std::string& filepath) {
+    objectData data;
+    std::ifstream stream(filepath);
+    std::string line;
+    std::string x, y, z;
+    while (getline(stream, line)) {
+        std::stringstream ss{ line };
+        std::string ch;
+        ss >> ch;
+        ss >> x >> y >> z;
+        if (ch == "v") {
+            data.vert.push_back(std::stof(x));
+            data.vert.push_back(std::stof(y));
+            data.vert.push_back(std::stof(z));
+        }
+        else if (ch == "f") {
+            data.face.push_back(std::stoi(x));
+            data.normalIndex.push_back(std::stoi(y));
+            data.face.push_back(std::stoi(z));
+            ss >> x >> y >> z;
+            data.normalIndex.push_back(std::stoi(x));
+            data.face.push_back(std::stoi(y));
+            data.normalIndex.push_back(std::stoi(z));
+        }
+        else if (ch == "vn") {
+            data.normal.push_back(std::stof(x));
+            data.normal.push_back(std::stof(y));
+            data.normal.push_back(std::stof(z));
+        }
+    }
+    return data;
+}
 
 void processInput(GLFWwindow* window)
 {
@@ -251,7 +245,7 @@ int main(void) {
     if (useNormals) {
         //d = readObjWithNormals("models/knightNormal.txt");
 
-        /*std::cout << d.vert.size() << " " << d.face.size() << " " <<d.normal.size()<<" "<<d.normalIndex.size()<<" ";
+        std::cout << d.vert.size() << " " << d.face.size() << " " <<d.normal.size()<<" "<<d.normalIndex.size()<<" ";
 
         glUniform3fv(glGetUniformLocation(shader, "vertices"), d.vert.size()/3, &d.vert[0]);
         glUniform1i(glGetUniformLocation(shader, "verticesSize"), d.vert.size());
@@ -263,57 +257,31 @@ int main(void) {
         glUniform1i(glGetUniformLocation(shader, "normalsSize"), d.normal.size());
 
         glUniform3iv(glGetUniformLocation(shader, "normalIndices"), d.normalIndex.size()/3, &d.normalIndex[0]);
-        glUniform1i(glGetUniformLocation(shader, "normalIndicesSize"), d.normalIndex.size());*/
+        glUniform1i(glGetUniformLocation(shader, "normalIndicesSize"), d.normalIndex.size());
     }
     else {
         d = readObj("models/sus.txt");
 
         std::cout << d.vert.size() << " " << d.face.size() << " ";
 
-        glUniform3fv(glGetUniformLocation(shader, "vertices"), d.vert.size()/3, &d.vert[0].x);
+        glUniform3fv(glGetUniformLocation(shader, "vertices"), d.vert.size()/3, &d.vert[0]);
         glUniform1i(glGetUniformLocation(shader, "verticesSize"), d.vert.size());
 
-        glUniform3iv(glGetUniformLocation(shader, "faces"), d.face.size()/3, &d.face[0].x);
+        glUniform3iv(glGetUniformLocation(shader, "faces"), d.face.size()/3, &d.face[0]);
         glUniform1i(glGetUniformLocation(shader, "facesSize"), d.face.size());
     }
     int maxVertUniformsVect;
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &maxVertUniformsVect);
     std::cout <<"    "<<maxVertUniformsVect;
 
-    ivec4 vertData[968];
-    //std::vector<ivec3> vertData;
-    int vertDataIndex = 0;
-    for (int i = 0; i < 968; i++) {
-        vertData[vertDataIndex] = ivec4(d.face.at(i),0);
-        vertDataIndex++;
-    }
-
-    GLuint ssbo;
+   /* GLuint ssbo;
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vertData), &vertData, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, d.vert.size()*sizeof(float), d.vert.data(), GL_STATIC_DRAW);
     
     GLuint bindingPoint = 0;
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, ssbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-
-
-    /*
-        GLuint ssbo;
-    glGenBuffers(1, &ssbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * flatVertices.size() + sizeof(unsigned int) * flatFaces.size(), nullptr, GL_STATIC_DRAW);
-
-    // Map and copy data to the buffer
-    GLvoid* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    std::memcpy(ptr, flatVertices.data(), sizeof(glm::vec3) * flatVertices.size());
-    std::memcpy((char*)ptr + sizeof(glm::vec3) * flatVertices.size(), flatFaces.data(), sizeof(unsigned int) * flatFaces.size());
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPointIndex, ssbo);
-
-    */
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);*/
 
     //GLuint ubo;
     //glGenBuffers(1, &ubo);
@@ -364,7 +332,7 @@ int main(void) {
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         glUniform1i(glGetUniformLocation(shader, "directOutPass"), 0);
         //if (frameNum % 20 != 0) {
-            glUniform1i(glGetUniformLocation(shader, "rotateDeg"), (frameNum - (frameNum % 20)) * 25);
+            glUniform1i(glGetUniformLocation(shader, "rotateDeg"), (frameNum - (frameNum % 20)) * 5);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, screenTexture);

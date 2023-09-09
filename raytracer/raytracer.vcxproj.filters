@@ -18,9 +18,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="texture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\vertex.shader" />
@@ -34,9 +31,6 @@
     <ClInclude Include="stb\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="texture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="neuron.jpeg">
@@ -47,9 +41,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Text.txt" />
-    <Text Include="bunny.txt" />
-    <Text Include="Text1.txt" />
-    <Text Include="ico.txt" />
+    <Text Include="models\Text.txt" />
+    <Text Include="models\bunny.obj" />
+    <Text Include="models\Text1.txt" />
+    <Text Include="models\ico.txt" />
+    <Text Include="models\icoNormal.txt" />
+    <Text Include="models\knight.txt" />
+    <Text Include="models\knightNormal.txt" />
+    <Text Include="models\sus.txt" />
   </ItemGroup>
 </Project>
