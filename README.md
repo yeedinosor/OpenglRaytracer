@@ -1,22 +1,22 @@
 # raytracer
 
 
-gpu accelerated ray tracer / path tracer
+opengl ray tracer / path tracer
 
 
+<p>monkey:</p>
+<img width="537" alt="Screenshot 2023-09-09 151340" src="https://github.com/yeedinosor/raytracer/assets/123328935/7c886297-3f56-43aa-8ce7-e7282150aa38">
+<img width="537" alt="Screenshot 2023-09-09 151456" src="https://github.com/yeedinosor/raytracer/assets/123328935/7a177438-92dc-443a-b74c-4b0b84bb5c3d">
+<img width="534" alt="Screenshot 2023-09-09 151637" src="https://github.com/yeedinosor/raytracer/assets/123328935/28d21000-62fb-4bef-8b27-f17f0377ff1a">
 
-<img width="700" alt="Screenshot 2023-08-09 192850" src="https://github.com/yeedinosor/raytracer/assets/123328935/e362c363-079c-4a34-8800-235b377d1838" align="center">
 
+<p>knight:</p>
+<img width="258" alt="Screenshot 2023-08-17 213711" src="https://github.com/yeedinosor/raytracer/assets/123328935/f989d26f-68dc-4c3a-96e6-7c4252ac3376" align="center">
 
 <p>icosphere:</p>
 <img width="534" alt="Screenshot 2023-08-17 214200" src="https://github.com/yeedinosor/raytracer/assets/123328935/1d55a71c-806a-474d-aaa7-7ae6d13fb2e6" align="center">
 
-
-<p>knight with less samples:</p>
-<img width="342" alt="Screenshot 2023-08-17 214617" src="https://github.com/yeedinosor/raytracer/assets/123328935/456d6832-cda1-4a34-acb4-f5d676e9d1c2">
-
-
-<p>knight with more samples:</p>
-<img width="258" alt="Screenshot 2023-08-17 213711" src="https://github.com/yeedinosor/raytracer/assets/123328935/f989d26f-68dc-4c3a-96e6-7c4252ac3376" align="center">
+<p>random spheres:</p>
+<img width="700" alt="Screenshot 2023-08-09 192850" src="https://github.com/yeedinosor/raytracer/assets/123328935/e362c363-079c-4a34-8800-235b377d1838" align="center">
 
 
