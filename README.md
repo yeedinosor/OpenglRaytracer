@@ -5,9 +5,7 @@ opengl ray tracer / path tracer
 
 
 <p>monkey:</p>
-<img width="537" alt="Screenshot 2023-09-09 151340" src="https://github.com/yeedinosor/raytracer/assets/123328935/7c886297-3f56-43aa-8ce7-e7282150aa38">
-<img width="537" alt="Screenshot 2023-09-09 151456" src="https://github.com/yeedinosor/raytracer/assets/123328935/7a177438-92dc-443a-b74c-4b0b84bb5c3d">
-<img width="534" alt="Screenshot 2023-09-09 151637" src="https://github.com/yeedinosor/raytracer/assets/123328935/28d21000-62fb-4bef-8b27-f17f0377ff1a">
+<img width="715" alt="Screenshot 2023-09-09 211002" src="https://github.com/yeedinosor/raytracer/assets/123328935/06d0dd3a-2617-4ada-b64a-93ff07cd4f30">
 
 
 <p>knight:</p>
