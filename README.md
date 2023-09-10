@@ -5,11 +5,14 @@ opengl ray tracer / path tracer
 
 
 <p>monkey:</p>
+<img width="710" alt="Screenshot 2023-09-10 093208" src="https://github.com/yeedinosor/raytracer/assets/123328935/98b54029-6348-4814-8bea-2d330a8d1f56">
+
 <img width="715" alt="Screenshot 2023-09-09 211002" src="https://github.com/yeedinosor/raytracer/assets/123328935/06d0dd3a-2617-4ada-b64a-93ff07cd4f30">
 
 
 <p>knight:</p>
-<img width="342" alt="Screenshot 2023-08-17 214617" src="https://github.com/yeedinosor/raytracer/assets/123328935/d729a443-bb04-4239-b4f7-6b89741352c2">
+
+<img width="715" alt="Screenshot 2023-09-10 095428" src="https://github.com/yeedinosor/raytracer/assets/123328935/9f737ee3-0562-4137-8ca7-59322ff5bd74">
 
 
 <p>icosphere:</p>
