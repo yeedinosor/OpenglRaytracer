@@ -1,59 +1,29 @@
 #version 460
-
 #define epsilon 0.0000001
-
 const int height = 1080;
 const int width = 1080;
-
-
 out vec3 color;
-
 in vec2 textCoord;
-
 uniform sampler2D screenTexture;
-
 uniform int frameNumber;
-
 uniform bool directOutPass;
 uniform float sphereVertical;
 uniform bool useNormals;
-
-//uniform vec3 vertices[47];
-//uniform vec3 normals[1];
-//uniform ivec3 faces[83];
-//uniform ivec3 normalIndices[1];
-
-//uniform vec3 vertices[235];
-//uniform vec3 normals[1];
-//uniform ivec3 faces[456];
-//uniform ivec3 normalIndices[1];
-
 uniform vec3 camPos;
-uniform vec3 vertices[507];
 uniform vec3 normals[1];
-//uniform ivec3 faces[510];
 uniform ivec3 normalIndices[1];
-
-//uniform vec3 camPos;
-////uniform vec3 vertices[2503];
-//uniform vec3 normals[1];
-//uniform ivec3 faces[4968];
-//uniform ivec3 normalIndices[1];
-
 uniform int verticesSize;
 uniform int normalsSize;
 uniform int facesSize;
 uniform int normalIndicesSize;
 uniform int rotateDeg;
 
-//layout(std140, binding = 0) uniform MyUBO{
-//    vec3 vertices[235];
-//};
-
 layout(std430, binding = 0) buffer VertexBuffer {
-    ivec3 faces[];
+    vec3 vertices[2503];
+    ivec3 faces[4968];
 };
 
+uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x) + uint(frameNumber) * uint(719393);
 
 struct ray {
     bool noRay;
@@ -72,6 +42,8 @@ struct material {
     vec3 color;
     vec3 emittance;
     float smoothness;
+    float specular;
+    bool refract;
 };
 
 material createMaterial(vec3 c, vec3 e, float s) {
@@ -79,8 +51,21 @@ material createMaterial(vec3 c, vec3 e, float s) {
     m.color = c;
     m.emittance = e;
     m.smoothness = s;
+    m.specular = 1;
+    m.refract = false;
     return m;
 }
+
+material createMaterialSpecular(vec3 c, vec3 e, float s , float spec) {
+    material m;
+    m.color = c;
+    m.emittance = e;
+    m.smoothness = s;
+    m.specular = spec;
+    m.refract = false;
+    return m;
+}
+
 
 struct sphere {
     float radius;
@@ -213,7 +198,7 @@ hit triangleIntersect(ray r, triangle tri) {
     vec3 h = cross(r.direction, edge2);
     float a = dot(edge1, h);
 
-    if (a > -epsilon && a < epsilon) {
+    if (a > - epsilon && a < epsilon) {
         result.didHit = false;
         return result;
     }
@@ -243,7 +228,7 @@ hit triangleIntersect(ray r, triangle tri) {
         result.distance = t;
         result.objectMaterial = tri.material;
         vec3 N = normalize(cross(edge1, edge2));
-        float normalDot = dot(N, N);
+        //float normalDot = dot(N, N);
         result.normal = N;
         if (false)
             result.normal = -N; //may need to change
@@ -284,50 +269,50 @@ hit triangleIntersect(ray r, triangle tri) {
 //
 //}
 
-hit triangleIntersectNormal(ray r, triangle tri) {
-    hit result;
-    vec3 edge1 = tri.v2 - tri.v1;
-    vec3 edge2 = tri.v3 - tri.v1;
-    vec3 h = cross(r.direction, edge2);
-    float a = dot(edge1, h);
-
-    if (a > -epsilon && a < epsilon) {
-        result.didHit = false;
-        return result;
-    }
-
-    float f = 1.0 / a;
-    vec3 s = r.origin - tri.v1;
-    float u = f * dot(s, h);
-
-    if (u < 0.0 || u > 1.0) {
-        result.didHit = false;
-        return result;
-    }
-
-    vec3 q = cross(s, edge1);
-    float v = f * dot(r.direction, q);
-
-    if (v < 0.0 || u + v > 1.0) {
-        result.didHit = false;
-        return result;
-    }
-
-    float t = f * dot(edge2, q);
-    if (t > epsilon) // ray intersection
-    {
-        result.hitPoint = r.origin + r.direction * t;
-        result.didHit = true;
-        result.distance = t;
-        result.objectMaterial = tri.material;
-        result.normal = tri.vn1;
-        return result;
-    }
-    else {
-        result.didHit = false;
-        return result;
-    }
-}
+//hit triangleIntersectNormal(ray r, triangle tri) {
+//    hit result;
+//    vec3 edge1 = tri.v2 - tri.v1;
+//    vec3 edge2 = tri.v3 - tri.v1;
+//    vec3 h = cross(r.direction, edge2);
+//    float a = dot(edge1, h);
+//
+//    if (a > -epsilon && a < epsilon) {
+//        result.didHit = false;
+//        return result;
+//    }
+//
+//    float f = 1.0 / a;
+//    vec3 s = r.origin - tri.v1;
+//    float u = f * dot(s, h);
+//
+//    if (u < 0.0 || u > 1.0) {
+//        result.didHit = false;
+//        return result;
+//    }
+//
+//    vec3 q = cross(s, edge1);
+//    float v = f * dot(r.direction, q);
+//
+//    if (v < 0.0 || u + v > 1.0) {
+//        result.didHit = false;
+//        return result;
+//    }
+//
+//    float t = f * dot(edge2, q);
+//    if (t > epsilon) // ray intersection
+//    {
+//        result.hitPoint = r.origin + r.direction * t;
+//        result.didHit = true;
+//        result.distance = t;
+//        result.objectMaterial = tri.material;
+//        result.normal = tri.vn1;
+//        return result;
+//    }
+//    else {
+//        result.didHit = false;
+//        return result;
+//    }
+//}
 
 hit sphereIntersect(ray r, sphere s) {
     hit h;
@@ -382,6 +367,22 @@ vec3 randDirection(inout uint state) {
     return normalize(vec3(randNormalDist(state), randNormalDist(state), randNormalDist(state)));
 }
 
+vec3 randCosDirection(inout uint state) {
+    float r1 = random(state);
+    float r2 = random(state);
+    float phi = 2 * radians(180) * r1;
+    float x = cos(phi) * sqrt(r2);
+    float y = sin(phi) * sqrt(r2);
+    float z = sqrt(1 - r2);
+
+    return vec3(x, y, z);
+}
+
+//vec2 randCirclePoint(inout uint state) {
+//    float angle = random(state) * radians(360);
+//    return vec2(cos(angle), sin(angle)) * sqrt(random(state));
+//}
+
 const int sphereNum = 1;
 sphere spheres[sphereNum];
 
@@ -392,15 +393,16 @@ sphere spheres[sphereNum];
 const bool useBox = true;
 
 vec3 boxVertices[8] = {
-    vec3(3.000000, 3.000000, -3.000000),
-    vec3(3.000000, -3.000000, -3.000000),
-    vec3(3.000000, 3.000000, 3.000000),
-    vec3(3.000000, -3.000000, 3.000000),
-    vec3(-3.000000, 3.000000, -3.000000), 
-    vec3(-3.000000, -3.000000, -3.000000),
-    vec3(-3.000000, 3.000000, 3.000000),
-    vec3(-3.000000, -3.000000, 3.000000)
+    vec3(1.700000, 1.700000, -1.700000),
+    vec3(1.700000, -1.700000, -1.700000),
+    vec3(1.700000, 1.700000, 1.700000),
+    vec3(1.700000, -1.700000, 1.700000),
+    vec3(-1.700000, 1.700000, -1.700000), 
+    vec3(-1.700000, -1.700000, -1.700000),
+    vec3(-1.700000, 1.700000, 1.700000),
+    vec3(-1.700000, -1.700000, 1.700000)
 };
+
 ivec3 boxIndices[12] = {
     ivec3(3, 5, 1),
     ivec3(6, 7, 8),
@@ -417,27 +419,27 @@ ivec3 boxIndices[12] = {
 };
 vec3 boxColor[12] = {
     vec3(1,1,1),
-    vec3(1,0,0),
+    vec3(0.86,0.08,0.24),
+    vec3(0.3,0.78,0.47),
+    vec3(0,0.75,1),
     vec3(1,1,1),
-    vec3(0,1,0),
     vec3(1,1,1),
-    vec3(1,1,1),
-    vec3(1,0,0),
-    vec3(1,1,1),
-    vec3(0,1,0),
+    vec3(0.86,0.08,0.24),
+    vec3(0.3,0.78,0.47),
+    vec3(0,0.75,1),
     vec3(1,1,1),
     vec3(1,1,1),
     vec3(1,1,1)
 };
 vec3 planeVertices[4] = {
-    vec3(-1.00000, 2.9, 1.00000),
-    vec3(1.00000, 2.9, 1.00000),
-    vec3(-1.00000, 2.9, - 1.00000),
-    vec3(1.00000, 2.9, - 1.00000)
+    vec3(-0.7, 1.6, 0.7),
+    vec3(0.7, 1.6, 0.7),
+    vec3(-0.7, 1.6, - 0.7),
+    vec3(0.7, 1.6, - 0.7)
 };
 ivec3 planeIndices[2] = {
-    ivec3(2, 3, 1),
-    ivec3(2, 4, 3)
+    ivec3(3, 2, 1),
+    ivec3(4, 2, 3)
 };
 
 hit collision(ray r) {
@@ -459,8 +461,9 @@ hit collision(ray r) {
             /*vec3 axis = vec3(1, 1, 1);
             h = triangleIntersect(r, createTriangle(quaternionRotation(axis, vertices[faces[i].x - 1], rotateDeg), quaternionRotation(axis, vertices[faces[i].y - 1], rotateDeg), quaternionRotation(axis, vertices[faces[i].z - 1], rotateDeg), createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0.0)));
         */
-            h = triangleIntersect(r, createTriangle(vertices[faces[i].x - 1],vertices[faces[i].y - 1],vertices[faces[i].z - 1], createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0.0)));
-        //}
+            h = triangleIntersect(r, createTriangle(vertices[faces[i].x - 1],vertices[faces[i].y - 1],vertices[faces[i].z - 1], createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0.5)));
+            h.objectMaterial.refract = true;
+            //}
         if (h.didHit && h.distance < minDist) {
             minDist = h.distance;
             result = h;
@@ -495,6 +498,7 @@ vec3 trace(ray r, inout uint state, int depth) {
     vec3 rayColor = vec3(1, 1, 1);
     ray tracedRay = r;
     hit tracedHit;
+    bool negativeNormal = false;
     for (int i = 0; i < depth; i++) {
         tracedHit = collision(tracedRay);
         if (!tracedHit.didHit) {
@@ -504,32 +508,127 @@ vec3 trace(ray r, inout uint state, int depth) {
         }
         vec3 specularDir = reflect(tracedRay.direction, tracedHit.normal);
         vec3 diffuseDir = randDirection(state)+tracedHit.normal;
-        tracedRay = createRay(tracedHit.hitPoint, mix(normalize(diffuseDir), normalize(specularDir), tracedHit.objectMaterial.smoothness));
-        //tracedRay.direction = -tracedHit.hitPoint + spheres[0].center;
-        totalIllumination += tracedHit.objectMaterial.emittance * rayColor * pow(0.88,float(i));
+        //vec3 cosDir = randCosDirection(state);
+        //vec3 diffuseDir = cosDir * sign(dot(cosDir, tracedHit.normal));
+
+        float n1 = 1.0;
+        float n2 = 1.5;
+        if (negativeNormal) {
+            n1 = 1.5;
+            n2 = 1;
+            tracedHit.normal *= vec3(-1);
+        }
+        else {
+            n2 = 1.5;
+            n1 = 1.0;
+        }
+        float n12 = n1 / n2;
+        float n21 = n2 / n1;
+        float cosTheta1 = dot(tracedRay.direction, tracedHit.normal);
+        float cosTheta2 = sqrt(1 - n12 * n12 * (1 - cosTheta1 * cosTheta1));
+
+        vec3 refractDir = normalize (n12 * tracedRay.direction + (n12 * cosTheta1 - cosTheta2) * tracedHit.normal);
+
+        bool useSpecular = abs(random(rngState)) > tracedHit.objectMaterial.specular;
+        if (useSpecular) {
+            tracedRay = createRay(tracedHit.hitPoint, normalize(diffuseDir));
+        }
+        else {
+            tracedRay = createRay(tracedHit.hitPoint, mix(normalize(diffuseDir), normalize(specularDir), tracedHit.objectMaterial.smoothness));
+        }
+        if (tracedHit.objectMaterial.refract) {
+            int reflectRefract = int(0.1 > random(rngState));
+            tracedRay = createRay(tracedHit.hitPoint, mix(normalize(refractDir), specularDir, reflectRefract));
+            negativeNormal = !negativeNormal;
+        }
+        /*if (negativeNormal) {
+            tracedRay = createRay(tracedHit.hitPoint, tracedRay.direction + 2 * dot(tracedRay.direction, -tracedHit.normal) * -tracedHit.normal);
+        }
+        else {*/
+            //tracedRay = createRay(tracedHit.hitPoint, tracedRay.direction + 2 * dot(tracedRay.direction, tracedHit.normal) * tracedHit.normal);
+        //}
+        totalIllumination += tracedHit.objectMaterial.emittance * rayColor * 2;
 
         rayColor *= tracedHit.objectMaterial.color;
-
-
+        
     }
     return totalIllumination;
 }
 
+//vec3 trace(ray r, inout uint state, int depth) {
+//
+//    vec3 totalIllumination = vec3(0, 0, 0);
+//    vec3 rayColor = vec3(1, 1, 1);
+//    ray tracedRay = r;
+//    hit tracedHit;
+//    for (int i = 0; i < depth; i++) {
+//        tracedHit = collision(tracedRay);
+//        if (!tracedHit.didHit) {
+//            vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
+//            totalIllumination += vec3(0.529 / pixelPosition.y, 0.808 / pixelPosition.y, 0.922 / pixelPosition.y);
+//            break;
+//        }
+//        ray oldRay = tracedRay;
+//        vec3 diffuseDir = randDirection(state) + tracedHit.normal;
+//        tracedRay = createRay(tracedHit.hitPoint, normalize(diffuseDir));
+//
+//        vec3 halfVec = normalize(oldRay.direction + tracedRay.direction);
+//        material objMat = tracedHit.objectMaterial;
+//        float vDotH = dot(halfVec, oldRay.direction);
+//
+//        float roughness = 1 - objMat.smoothness;
+//        float alpha2 = pow(roughness, 4);
+//        float nDotH = dot(tracedHit.normal, halfVec);
+//        float ggxDist = alpha2 / (radians(180) * pow(nDotH*nDotH * (alpha2 - 1) + 1, 2));
+//
+//        float dp = dot(tracedHit.normal, tracedRay.direction);
+//        float k = pow(roughness + 1.0, 2) / 8;
+//        float denom = dp * (1 - k) + k;
+//        float geom1 = dp / denom;
+//        dp = dot(tracedHit.normal, oldRay.direction);
+//        k = pow(roughness + 1.0, 2) / 8;
+//        denom = dp * (1 - k) + k;
+//        float geom2 = dp / denom;
+//        float geom = geom1 * geom2;
+//
+//        vec3 f0 = vec3(0.04);
+//        vec3 fresnel = f0 + (1 - f0) * pow(clamp(1.0 - vDotH, 0.0, 1.0), 5);
+//
+//        vec3 specularBRDF = ggxDist * geom * fresnel / (4 * dot(tracedHit.normal, tracedRay.direction) * dot(tracedHit.normal, oldRay.direction));
+//
+//        totalIllumination += tracedHit.objectMaterial.emittance * mix(rayColor, specularBRDF, 0.5);
+//
+//        rayColor *= tracedHit.objectMaterial.color;
+//
+//        
+//    }
+//    return totalIllumination;
+//}
 
 void main() {
-    const int height = 1080;
-    const int width = 1080;
 
     vec2 pixelPosition = gl_FragCoord.xy / vec2(width, height);
 
-    uint rngState = uint(gl_FragCoord.y * gl_FragCoord.x)+uint(frameNumber)*uint(719393);
+    
     uint rngState2 = uint(2);
 
+    for (int i = 0; i < 8; i++) {
+        boxVertices[i] /= 1.5;
+        boxVertices[i].z += 1;
+    }
+    for (int i = 0; i < 4; i++) {
+        planeVertices[i].y /= 1.5;
+        planeVertices[i].z /= 1.25;
+        planeVertices[i].x /= 1.25;
+        planeVertices[i].z += 1;
+
+    }
     //camera c = createCamera(90, 1, vec3(-1, 0, 2));
-    camera c = createCamera(90, 1, vec3(0, 0, 3));
+    camera c = createCamera(90, 1, vec3(-0, 0, 1.7));
     ray cameraRay = createCameraRay(pixelPosition.x, pixelPosition.y, c);
-    //cameraRay.direction = quaternionRotation(vec3(0, 1, 0), cameraRay.direction, -10);
-    //spheres[0] = createSphere(2, vec3(-4,4,4), createMaterial(vec3(1, 1, 1), vec3(1, 1, 1), 0.0));
+    cameraRay.direction = quaternionRotation(vec3(0, 1, 0), cameraRay.direction, rotateDeg);
+    //spheres[0] = createSphere(0.3, vec3(-0,-0.3,1), createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0));
+    //spheres[0].material.refract = true;
     //spheres[1] = createSphere(2, vec3(0, 0, 0), createMaterial(vec3(1, 1, 1), vec3(0, 0, 0), 0));
     
     /*for (int i = 0; i < triangleNum; i++) {
@@ -552,14 +651,15 @@ void main() {
         spheres[i] = createSphere(random(rngState2)/2, vec3(random(rngState2)*10-5, random(rngState2), random(rngState2)*6-10), createMaterial(vec3(random(rngState2), random(rngState2), random(rngState2)), vec3(0, 0, 0), random(rngState2)));
     }*/
     
-    vec3 totalLight = trace(cameraRay, rngState, 5);
+    
 
-    color = totalLight;
+    
 
     if (directOutPass) {
         color = texture(screenTexture, textCoord).xyz;
     }
     else {
+        vec3 totalLight = trace(cameraRay, rngState, 10);
         color = totalLight/frameNumber;
         if (frameNumber > 0) {
             color += texture(screenTexture, textCoord).xyz*(frameNumber-1)/frameNumber;

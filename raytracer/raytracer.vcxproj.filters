@@ -49,5 +49,11 @@
     <Text Include="models\knight.txt" />
     <Text Include="models\knightNormal.txt" />
     <Text Include="models\sus.txt" />
+    <Text Include="models\blendBunny.txt" />
+    <Text Include="models\dragon1.txt" />
+    <Text Include="models\susSub2.txt" />
+    <Text Include="models\sus2size.txt" />
+    <Text Include="models\bunnysize.txt" />
+    <Text Include="models\sussize.txt" />
   </ItemGroup>
 </Project>

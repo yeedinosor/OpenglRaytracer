@@ -150,12 +150,18 @@
     <Image Include="neuron.jpeg" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="models\blendBunny.txt" />
     <Text Include="models\bunny.obj" />
+    <Text Include="models\bunnysize.txt" />
+    <Text Include="models\dragon1.txt" />
     <Text Include="models\ico.txt" />
     <Text Include="models\icoNormal.txt" />
     <Text Include="models\knight.txt" />
     <Text Include="models\knightNormal.txt" />
     <Text Include="models\sus.txt" />
+    <Text Include="models\sus2size.txt" />
+    <Text Include="models\sussize.txt" />
+    <Text Include="models\susSub2.txt" />
     <Text Include="models\Text.txt" />
     <Text Include="models\Text1.txt" />
   </ItemGroup>

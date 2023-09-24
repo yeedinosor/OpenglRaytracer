@@ -16,6 +16,10 @@
 
 using namespace glm;
 
+bool resetFrame = false;
+int cameraDegrees = 0;
+bool stopRendering = false;
+
 struct objectData {
     std::vector<vec3> vert;
     std::vector<ivec3> face;
@@ -87,7 +91,15 @@ objectData readObj(const std::string& filepath) {
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+        stopRendering = true;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        resetFrame = true;
+        cameraDegrees -= 10;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        resetFrame = true;
+        cameraDegrees += 10;
+    }
 }
 
 static std::string ParseShader(const std::string& filepath) {
@@ -120,7 +132,6 @@ static unsigned int CompileShader(unsigned int type, const std::string& source) 
     }
 
     return id;
-
 }
 
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader) {
@@ -266,90 +277,76 @@ int main(void) {
         glUniform1i(glGetUniformLocation(shader, "normalIndicesSize"), d.normalIndex.size());*/
     }
     else {
-        d = readObj("models/sus.txt");
+        d = readObj("models/blendBunny.txt");
 
         std::cout << d.vert.size() << " " << d.face.size() << " ";
 
-        glUniform3fv(glGetUniformLocation(shader, "vertices"), d.vert.size()/3, &d.vert[0].x);
+        glUniform3fv(glGetUniformLocation(shader, "vertices"), d.vert.size(), &d.vert[0].x);
         glUniform1i(glGetUniformLocation(shader, "verticesSize"), d.vert.size());
 
-        glUniform3iv(glGetUniformLocation(shader, "faces"), d.face.size()/3, &d.face[0].x);
+        glUniform3iv(glGetUniformLocation(shader, "faces"), d.face.size(), &d.face[0].x);
         glUniform1i(glGetUniformLocation(shader, "facesSize"), d.face.size());
     }
     int maxVertUniformsVect;
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &maxVertUniformsVect);
     std::cout <<"    "<<maxVertUniformsVect;
 
-    ivec4 vertData[968];
-    //std::vector<ivec3> vertData;
+    const int vertDataSize = 2503;
+    const int faceDataSize = 4968;
+
+    struct newMeshData {
+        vec4 vertData[vertDataSize];
+        ivec4 faceData[faceDataSize];
+    };
+
+    newMeshData* mesh = new newMeshData;
+
     int vertDataIndex = 0;
-    for (int i = 0; i < 968; i++) {
-        vertData[vertDataIndex] = ivec4(d.face.at(i),0);
+    for (int i = 0; i < vertDataSize; i++) {
+        mesh->vertData[vertDataIndex] = vec4(d.vert.at(i),0);
         vertDataIndex++;
     }
+
+    int faceDataIndex = 0;
+    for (int i = 0; i < faceDataSize; i++) {
+        mesh->faceData[faceDataIndex] = ivec4(d.face.at(i), 0);
+        faceDataIndex++;
+    }
+
+    
 
     GLuint ssbo;
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vertData), &vertData, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(newMeshData), mesh, GL_STATIC_DRAW);
     
     GLuint bindingPoint = 0;
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
-
-    /*
-        GLuint ssbo;
-    glGenBuffers(1, &ssbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * flatVertices.size() + sizeof(unsigned int) * flatFaces.size(), nullptr, GL_STATIC_DRAW);
-
-    // Map and copy data to the buffer
-    GLvoid* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    std::memcpy(ptr, flatVertices.data(), sizeof(glm::vec3) * flatVertices.size());
-    std::memcpy((char*)ptr + sizeof(glm::vec3) * flatVertices.size(), flatFaces.data(), sizeof(unsigned int) * flatFaces.size());
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPointIndex, ssbo);
-
-    */
-
-    //GLuint ubo;
-    //glGenBuffers(1, &ubo);
-    //glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    //glBufferData(GL_UNIFORM_BUFFER, d.vert.size(), nullptr, GL_DYNAMIC_DRAW);
-
-    //GLuint bindingPoint = 0;
-    //glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo);
-    //GLuint blockIndex = glGetUniformBlockIndex(shader, "MyUBO");
-    //glUniformBlockBinding(shader, blockIndex, bindingPoint);
-
-    //glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-    //glBufferSubData(GL_UNIFORM_BUFFER, 0, d.vert.size()*4, d.vert.data());
-
     float r = 0.01f;
     float increment = 1.0f;
 
     float previousTime = glfwGetTime();
-    int fps = 0;
     int frameNum = 0;
    
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, screenTexture);
 
 
+
     while (!glfwWindowShouldClose(window)) {
 
+        
+
+
         processInput(window);
-        fps++;
         float currentTime = glfwGetTime();
-        if (currentTime - previousTime >= 1.0) {
-            glfwSetWindowTitle(window, std::to_string(fps).c_str());
-            std::cout << fps << " fps, " << 1000 / fps << " ms" << std::endl;
-            fps = 0;
-            previousTime = currentTime;
-        }
+
+        glfwSetWindowTitle(window, (std::to_string(1 / (currentTime - previousTime))+" fps "+ std::to_string(1+frameNum / (currentTime)) + " avg " + std::to_string((currentTime - previousTime)*1000).c_str() + " ms " + std::to_string(1 + frameNum) + " samples ").c_str());
+        //std::cout << 1/(currentTime - previousTime) << " fps, " << currentTime - previousTime << " ms" << std::endl;
+        previousTime = currentTime;
 
         glUniform1f(glGetUniformLocation(shader, "sphereVertical"), r);
 
@@ -360,26 +357,35 @@ int main(void) {
         }
         r += increment;
 
-
+        //glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
         glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         glUniform1i(glGetUniformLocation(shader, "directOutPass"), 0);
         //if (frameNum % 20 != 0) {
-            glUniform1i(glGetUniformLocation(shader, "rotateDeg"), (frameNum - (frameNum % 20)) * 25);
+            //glUniform1i(glGetUniformLocation(shader, "rotateDeg"), (frameNum - (frameNum % 20)) * 25);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, screenTexture);
         //}
         frameNum++;
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glUniform1i(glGetUniformLocation(shader, "directOutPass"), 1);
-        glUniform1i(glGetUniformLocation(shader, "frameNumber"), frameNum);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        if (!stopRendering) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+            glUniform1i(glGetUniformLocation(shader, "directOutPass"), 1);
+            glUniform1i(glGetUniformLocation(shader, "frameNumber"), frameNum);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        }
 
        /* if (frameNum % 20 == 1) {
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, 0);
         }*/
+        if (resetFrame) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glUniform1i(glGetUniformLocation(shader, "rotateDeg"), cameraDegrees);
+            frameNum = 0;
+            resetFrame = false;
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
