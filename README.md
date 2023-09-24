@@ -3,6 +3,8 @@
 
 opengl ray tracer / path tracer
 <p>bunny:</p>
+<img width="540" alt="Screenshot 2023-09-24 131345" src="https://github.com/yeedinosor/raytracer/assets/123328935/f267dc0e-26b4-4c0b-b842-819e2e711c2d">
+
 <img width="706" alt="Screenshot 2023-09-10 204341" src="https://github.com/yeedinosor/raytracer/assets/123328935/aa3886a3-cf79-45e4-a501-8ef48913f583">
 
 <p>monkey:</p>
