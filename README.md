@@ -3,9 +3,9 @@
 
 opengl ray tracer / path tracer
 
-
-<img width="540" alt="Screenshot 2023-09-24 131345" src="https://github.com/yeedinosor/raytracer/assets/123328935/f267dc0e-26b4-4c0b-b842-819e2e711c2d">
 <img width="539" alt="Screenshot 2024-02-04 123757" src="https://github.com/yeedinosor/OpenglRaytracer/assets/123328935/eabb2406-35cc-4cd7-8265-5e79726b061a">
+<img width="540" alt="Screenshot 2023-09-24 131345" src="https://github.com/yeedinosor/raytracer/assets/123328935/f267dc0e-26b4-4c0b-b842-819e2e711c2d">
+
 
 
 <img width="534" alt="Screenshot 2023-09-15 224306" src="https://github.com/yeedinosor/raytracer/assets/123328935/09dd8b8b-4878-4ce5-aaf2-182a21c0380b">
