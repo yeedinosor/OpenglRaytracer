@@ -15,6 +15,4 @@ opengl ray tracer / path tracer
 
 <img width="715" alt="Screenshot 2023-09-10 095428" src="https://github.com/yeedinosor/raytracer/assets/123328935/9f737ee3-0562-4137-8ca7-59322ff5bd74">
 
-<img width="700" alt="Screenshot 2023-08-09 192850" src="https://github.com/yeedinosor/raytracer/assets/123328935/e362c363-079c-4a34-8800-235b377d1838" align="center">
-
 
